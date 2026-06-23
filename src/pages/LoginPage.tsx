@@ -75,19 +75,27 @@ function LoginPage() {
       <form onSubmit={handleSubmit} className="flex flex-col gap-4">
         <div className="flex flex-col gap-1">
           <label
+            htmlFor="login-email"
             className="text-[11px] uppercase tracking-[0.1em]"
             style={{ fontFamily: "'IBM Plex Mono', monospace", color: '#1F2A24' }}
           >
             Email
           </label>
           <input
+            id="login-email"
             type="email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
+            aria-invalid={!!emailError}
+            aria-describedby={emailError ? 'login-email-error' : undefined}
             className="border rounded px-3 py-2 outline-none focus:ring-2"
             style={{ ...inputStyle, '--tw-ring-color': '#2F6F4F' } as React.CSSProperties}
           />
-          {emailError && <p className="text-sm" style={{ color: '#D97B3F' }}>{emailError}</p>}
+          {emailError && (
+            <p id="login-email-error" className="text-sm" style={{ color: '#D97B3F' }}>
+              {emailError}
+            </p>
+          )}
         </div>
 
         <div className="flex flex-col gap-1">
