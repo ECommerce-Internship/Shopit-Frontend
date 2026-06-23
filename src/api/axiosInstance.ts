@@ -65,6 +65,7 @@ axiosInstance.interceptors.response.use(
       pendingRequests = [];
       return axiosInstance(originalRequest);
     } catch (refreshError) {
+      pendingRequests.forEach((resume) => resume(refreshError));
       pendingRequests = [];
       authStore.triggerLogout();
       return Promise.reject(refreshError);
