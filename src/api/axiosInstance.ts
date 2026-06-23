@@ -18,7 +18,7 @@ axiosInstance.interceptors.request.use((config: InternalAxiosRequestConfig) => {
 });
 
 let isRefreshing = false;
-let pendingRequests: Array<() => void> = [];
+let pendingRequests: Array<(err?: unknown) => void> = [];
 
 // Response interceptor: on 401, attempt a token refresh and retry the original request.
 axiosInstance.interceptors.response.use(
