@@ -6,6 +6,7 @@ import { Toaster } from 'react-hot-toast'
 import './index.css'
 import App from './App.tsx'
 import { AuthProvider } from './context/AuthContext.tsx'
+import { CartProvider } from './context/CartContext.tsx'
 
 const queryClient = new QueryClient()
 
@@ -14,8 +15,10 @@ createRoot(document.getElementById('root')!).render(
     <BrowserRouter>
       <QueryClientProvider client={queryClient}>
         <AuthProvider>
-          <Toaster position="top-center" />
-          <App />
+          <CartProvider>
+            <Toaster position="top-center" />
+            <App />
+          </CartProvider>
         </AuthProvider>
       </QueryClientProvider>
     </BrowserRouter>

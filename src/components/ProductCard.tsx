@@ -24,7 +24,8 @@ export function ProductCard({ product }: ProductCardProps) {
   const stockBadge = getStockBadge(product.stockQuantity);
 
   return (
-    <div
+    <Link
+      to={`/products/${product.id}`}
       className="rounded-lg overflow-hidden flex flex-col"
       style={{ backgroundColor: '#FFFFFF', border: '1px solid #E4DCC9' }}
     >
@@ -44,13 +45,12 @@ export function ProductCard({ product }: ProductCardProps) {
 
       <div className="p-4 flex flex-col gap-2 flex-1">
         {product.storeName && (
-          <Link
-            to={`/stores/${product.storeSlug}`}
-            className="text-[11px] uppercase tracking-[0.1em] hover:underline"
+          <span
+            className="text-[11px] uppercase tracking-[0.1em]"
             style={{ color: '#D97B3F', fontFamily: "'IBM Plex Mono', monospace" }}
           >
             Sold by {product.storeName}
-          </Link>
+          </span>
         )}
 
         <h3
@@ -85,6 +85,6 @@ export function ProductCard({ product }: ProductCardProps) {
           </span>
         </div>
       </div>
-    </div>
+    </Link>
   );
 }

@@ -1,5 +1,5 @@
 import axiosInstance from './axiosInstance';
-import type { Category, PaginatedProducts, ProductFilters } from '../types/product';
+import type { Category, PaginatedProducts, Product, ProductFilters } from '../types/product';
 
 export async function fetchProducts(filters: ProductFilters): Promise<PaginatedProducts> {
   const params: Record<string, string | number> = {
@@ -20,5 +20,10 @@ export async function fetchProducts(filters: ProductFilters): Promise<PaginatedP
 
 export async function fetchCategories(): Promise<Category[]> {
   const response = await axiosInstance.get<Category[]>('/api/v1/categories');
+  return response.data;
+}
+
+export async function fetchProductById(id: string): Promise<Product> {
+  const response = await axiosInstance.get<Product>(`/api/v1/products/${id}`);
   return response.data;
 }
