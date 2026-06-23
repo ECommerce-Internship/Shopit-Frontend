@@ -21,11 +21,17 @@ type FieldErrors = {
 function Field({
   label,
   error,
+  id,
   ...props
 }: { label: string; error?: string } & React.InputHTMLAttributes<HTMLInputElement>) {
+  const generatedId = useId();
+  const inputId = id ?? generatedId;
+  const errorId = `${inputId}-error`;
+
   return (
     <div className="flex flex-col gap-1">
       <label
+        htmlFor={inputId}
         className="text-[11px] uppercase tracking-[0.1em]"
         style={{ fontFamily: "'IBM Plex Mono', monospace", color: '#1F2A24' }}
       >
@@ -33,10 +39,17 @@ function Field({
       </label>
       <input
         {...props}
+        id={inputId}
+        aria-invalid={!!error}
+        aria-describedby={error ? errorId : undefined}
         className="border rounded px-3 py-2 outline-none focus:ring-2"
         style={{ ...inputStyle, '--tw-ring-color': '#2F6F4F' } as React.CSSProperties}
       />
-      {error && <p className="text-sm" style={{ color: '#D97B3F' }}>{error}</p>}
+      {error && (
+        <p id={errorId} className="text-sm" style={{ color: '#D97B3F' }}>
+          {error}
+        </p>
+      )}
     </div>
   );
 }
