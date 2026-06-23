@@ -100,19 +100,27 @@ function LoginPage() {
 
         <div className="flex flex-col gap-1">
           <label
+            htmlFor="login-password"
             className="text-[11px] uppercase tracking-[0.1em]"
             style={{ fontFamily: "'IBM Plex Mono', monospace", color: '#1F2A24' }}
           >
             Password
           </label>
           <input
+            id="login-password"
             type="password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
+            aria-invalid={!!passwordError}
+            aria-describedby={passwordError ? 'login-password-error' : undefined}
             className="border rounded px-3 py-2 outline-none focus:ring-2"
             style={{ ...inputStyle, '--tw-ring-color': '#2F6F4F' } as React.CSSProperties}
           />
-          {passwordError && <p className="text-sm" style={{ color: '#D97B3F' }}>{passwordError}</p>}
+          {passwordError && (
+            <p id="login-password-error" className="text-sm" style={{ color: '#D97B3F' }}>
+              {passwordError}
+            </p>
+          )}
         </div>
 
         <button
