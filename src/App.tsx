@@ -1,16 +1,26 @@
+import { Routes, Route } from 'react-router-dom';
+import Home from './pages/Home';
+import Login from './pages/Login';
+import Dashboard from './pages/Dashboard';
+import Admin from './pages/Admin';
+import { ProtectedRoute } from './components/ProtectedRoute';
+import { AdminRoute } from './components/AdminRoute';
+
 function App() {
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-100">
-      <div className="text-center p-8 bg-white rounded-lg shadow-md">
-        <h1 className="text-3xl font-bold text-purple-600 mb-2">
-          Shopit UI Scaffold
-        </h1>
-        <p className="text-gray-600">
-          API URL: <code className="text-sm bg-gray-100 px-2 py-1 rounded">{import.meta.env.VITE_API_URL}</code>
-        </p>
-      </div>
-    </div>
-  )
+    <Routes>
+      <Route path="/" element={<Home />} />
+      <Route path="/login" element={<Login />} />
+
+      <Route element={<ProtectedRoute />}>
+        <Route path="/dashboard" element={<Dashboard />} />
+
+        <Route element={<AdminRoute />}>
+          <Route path="/admin" element={<Admin />} />
+        </Route>
+      </Route>
+    </Routes>
+  );
 }
 
-export default App
+export default App;
