@@ -2,7 +2,7 @@ import { useState, type FormEvent } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import axiosInstance from '../api/axiosInstance';
-import { useAuth } from '../context/AuthContext';
+import { useAuth, getRedirectPathForRole } from '../context/AuthContext';
 
 function LoginPage() {
   const [email, setEmail] = useState('');
@@ -40,8 +40,8 @@ function LoginPage() {
     setLoading(true);
     try {
       const response = await axiosInstance.post('/api/v1/auth/login', { email, password });
-      login(response.data);
-      navigate('/products');
+      const authUser = login(response.data);
+      navigate(getRedirectPathForRole(authUser.role));
     } catch (err: any) {
       const message = err?.response?.data?.message ?? err?.response?.data ?? 'Login failed. Please try again.';
       toast.error(typeof message === 'string' ? message : 'Login failed. Please try again.');

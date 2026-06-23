@@ -1,6 +1,9 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
 import axiosInstance from '../api/axiosInstance';
 import { authStore } from './authStore';
+import { decodeJwt } from '../utils/jwt';
+
+const ROLE_CLAIM = 'http://schemas.microsoft.com/ws/2008/06/identity/claims/role';
 
 export type AuthUser = {
   id: string;
@@ -8,23 +11,54 @@ export type AuthUser = {
   firstName: string;
   lastName: string;
   role: string;
+  storeIds: string[];
 };
 
 type LoginResponse = {
   accessToken: string;
   refreshToken: string;
-  user: AuthUser;
+  user: {
+    id: string;
+    email: string;
+    firstName: string;
+    lastName: string;
+    role?: string;
+  };
 };
 
 type AuthContextType = {
   accessToken: string | null;
   refreshToken: string | null;
   user: AuthUser | null;
-  login: (data: LoginResponse) => void;
+  login: (data: LoginResponse) => AuthUser;
   logout: () => Promise<void>;
 };
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
+
+function buildAuthUser(data: LoginResponse): AuthUser {
+  let role = data.user.role ?? 'Customer';
+  let storeIds: string[] = [];
+
+  try {
+    const claims = decodeJwt<Record<string, unknown>>(data.accessToken);
+    role = (claims[ROLE_CLAIM] as string) ?? role;
+    // storeIds claim does not exist on the backend yet (pending SCRUM-30 follow-up).
+    // Defaulting to empty until that lands.
+    storeIds = (claims['storeIds'] as string[]) ?? [];
+  } catch {
+    // If decoding fails for any reason, fall back to the plain response fields.
+  }
+
+  return {
+    id: data.user.id,
+    email: data.user.email,
+    firstName: data.user.firstName,
+    lastName: data.user.lastName,
+    role,
+    storeIds,
+  };
+}
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [accessToken, setAccessToken] = useState<string | null>(null);
@@ -32,10 +66,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<AuthUser | null>(null);
 
   const login = (data: LoginResponse) => {
+    const authUser = buildAuthUser(data);
     setAccessToken(data.accessToken);
     setRefreshToken(data.refreshToken);
-    setUser(data.user);
+    setUser(authUser);
     authStore.setTokens(data.accessToken, data.refreshToken);
+    return authUser;
   };
 
   const logout = async () => {
@@ -72,7 +108,4 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 export function useAuth() {
   const context = useContext(AuthContext);
   if (!context) {
-    throw new Error('useAuth must be used within an AuthProvider');
-  }
-  return context;
-}
+    throw new
