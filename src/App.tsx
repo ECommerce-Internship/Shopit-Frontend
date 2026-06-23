@@ -5,6 +5,7 @@ import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
 import ProductListingPage from './pages/ProductListingPage';
 import ProductDetailPage from './pages/ProductDetailPage';
+import GoogleCallbackPage from './pages/GoogleCallbackPage';
 import Dashboard from './pages/Dashboard';
 import Admin from './pages/Admin';
 import Seller from './pages/Seller';
@@ -12,7 +13,7 @@ import { ProtectedRoute } from './components/ProtectedRoute';
 import { AdminRoute } from './components/AdminRoute';
 import { SellerRoute } from './components/SellerRoute';
 
-const HIDDEN_NAVBAR_PATHS = ['/login', '/register'];
+const HIDDEN_NAVBAR_PATHS = ['/login', '/register', '/auth/google/callback'];
 
 function App() {
   const location = useLocation();
@@ -25,6 +26,7 @@ function App() {
         <Route path="/" element={<Home />} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
+        <Route path="/auth/google/callback" element={<GoogleCallbackPage />} />
         <Route element={<ProtectedRoute />}>
           <Route path="/products" element={<ProductListingPage />} />
           <Route path="/products/:id" element={<ProductDetailPage />} />
