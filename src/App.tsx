@@ -33,6 +33,7 @@ function App() {
           <Route path="/products/:id" element={<ProductDetailPage />} />
           <Route path="/account" element={<AccountPage />} />
           <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/cart" element={<div className="p-6">Cart coming soon.</div>} />
           <Route element={<AdminRoute />}>
             <Route path="/admin" element={<Admin />} />
           </Route>
