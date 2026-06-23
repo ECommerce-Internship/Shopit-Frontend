@@ -24,18 +24,25 @@ let pendingRequests: Array<() => void> = [];
 axiosInstance.interceptors.response.use(
   (response) => response,
   async (error: AxiosError) => {
-    const originalRequest = error.config as InternalAxiosRequestConfig & { _retry?: boolean };
+    const originalRequest = error.config as InternalAxiosRequestConfig & {
+      _retry?: boolean;
+      skipAuthRefresh?: boolean;
+    };
+
+    // Some requests (e.g. change-password) treat a 401 as a domain error
+    // ("wrong current password"), NOT an expired session — they opt out here.
+    if (originalRequest?.skipAuthRefresh) {
+      return Promise.reject(error);
+    }
 
     if (error.response?.status !== 401 || originalRequest._retry) {
       return Promise.reject(error);
     }
-
     const refreshToken = authStore.getRefreshToken();
     if (!refreshToken) {
       authStore.triggerLogout();
       return Promise.reject(error);
     }
-
     if (isRefreshing) {
       // Queue this request until the in-flight refresh completes.
       return new Promise((resolve, reject) => {
@@ -44,23 +51,18 @@ axiosInstance.interceptors.response.use(
         });
       });
     }
-
     originalRequest._retry = true;
     isRefreshing = true;
-
     try {
       const response = await axios.post(
         `${import.meta.env.VITE_API_URL}/api/v1/auth/refresh-token`,
         { refreshToken }
       );
-
       const newAccessToken: string = response.data.accessToken;
       const newRefreshToken: string = response.data.refreshToken ?? refreshToken;
       authStore.setTokens(newAccessToken, newRefreshToken);
-
       pendingRequests.forEach((retry) => retry());
       pendingRequests = [];
-
       return axiosInstance(originalRequest);
     } catch (refreshError) {
       pendingRequests = [];

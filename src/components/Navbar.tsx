@@ -49,12 +49,13 @@ export function Navbar() {
 
         {user && (
           <div className="flex items-center gap-3">
-            <span
-              className="text-sm"
-              style={{ color: '#8A8273', fontFamily: "'Inter', sans-serif" }}
+            <Link
+              to="/account"
+              className="text-sm hover:underline"
+              style={{ color: '#1F2A24', fontFamily: "'Inter', sans-serif" }}
             >
               {user.firstName}
-            </span>
+            </Link>
             <button
               onClick={logout}
               className="text-sm"
