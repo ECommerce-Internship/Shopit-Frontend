@@ -3,6 +3,12 @@ import { Link, useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import axiosInstance from '../api/axiosInstance';
 import { useAuth, getRedirectPathForRole } from '../context/AuthContext';
+import { AuthLayout } from '../components/AuthLayout';
+
+const inputStyle = {
+  fontFamily: "'Inter', sans-serif",
+  borderColor: '#E4DCC9',
+};
 
 type FieldErrors = {
   firstName?: string;
@@ -11,6 +17,29 @@ type FieldErrors = {
   password?: string;
   confirmPassword?: string;
 };
+
+function Field({
+  label,
+  error,
+  ...props
+}: { label: string; error?: string } & React.InputHTMLAttributes<HTMLInputElement>) {
+  return (
+    <div className="flex flex-col gap-1">
+      <label
+        className="text-[11px] uppercase tracking-[0.1em]"
+        style={{ fontFamily: "'IBM Plex Mono', monospace", color: '#1F2A24' }}
+      >
+        {label}
+      </label>
+      <input
+        {...props}
+        className="border rounded px-3 py-2 outline-none focus:ring-2"
+        style={{ ...inputStyle, '--tw-ring-color': '#2F6F4F' } as React.CSSProperties}
+      />
+      {error && <p className="text-sm" style={{ color: '#D97B3F' }}>{error}</p>}
+    </div>
+  );
+}
 
 function RegisterPage() {
   const [firstName, setFirstName] = useState('');
@@ -74,91 +103,81 @@ function RegisterPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-100">
-      <form
-        onSubmit={handleSubmit}
-        className="bg-white p-8 rounded-lg shadow-md w-80 flex flex-col gap-4"
+    <AuthLayout eyebrow="Create account">
+      <h2
+        className="text-2xl mb-6"
+        style={{ fontFamily: "'Fraunces', serif", fontWeight: 500, color: '#1F2A24' }}
       >
-        <h1 className="text-2xl font-bold text-purple-600 text-center">Register</h1>
+        Join Shopit
+      </h2>
 
-        <div className="flex flex-col gap-1">
-          <input
-            type="text"
-            placeholder="First name"
+      <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+        <div className="grid grid-cols-2 gap-3">
+          <Field
+            label="First name"
             value={firstName}
             onChange={(e) => setFirstName(e.target.value)}
-            className="border border-gray-300 rounded px-3 py-2"
+            error={errors.firstName}
           />
-          {errors.firstName && <p className="text-red-500 text-sm">{errors.firstName}</p>}
-        </div>
-
-        <div className="flex flex-col gap-1">
-          <input
-            type="text"
-            placeholder="Last name"
+          <Field
+            label="Last name"
             value={lastName}
             onChange={(e) => setLastName(e.target.value)}
-            className="border border-gray-300 rounded px-3 py-2"
+            error={errors.lastName}
           />
-          {errors.lastName && <p className="text-red-500 text-sm">{errors.lastName}</p>}
         </div>
 
-        <div className="flex flex-col gap-1">
-          <input
-            type="email"
-            placeholder="Email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            className="border border-gray-300 rounded px-3 py-2"
-          />
-          {errors.email && <p className="text-red-500 text-sm">{errors.email}</p>}
-        </div>
+        <Field
+          label="Email"
+          type="email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          error={errors.email}
+        />
 
-        <div className="flex flex-col gap-1">
-          <input
-            type="password"
-            placeholder="Password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            className="border border-gray-300 rounded px-3 py-2"
-          />
-          {errors.password && <p className="text-red-500 text-sm">{errors.password}</p>}
-        </div>
+        <Field
+          label="Password"
+          type="password"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          error={errors.password}
+        />
 
-        <div className="flex flex-col gap-1">
-          <input
-            type="password"
-            placeholder="Confirm password"
-            value={confirmPassword}
-            onChange={(e) => setConfirmPassword(e.target.value)}
-            className="border border-gray-300 rounded px-3 py-2"
-          />
-          {errors.confirmPassword && <p className="text-red-500 text-sm">{errors.confirmPassword}</p>}
-        </div>
+        <Field
+          label="Confirm password"
+          type="password"
+          value={confirmPassword}
+          onChange={(e) => setConfirmPassword(e.target.value)}
+          error={errors.confirmPassword}
+        />
 
         <button
           type="submit"
           disabled={loading}
-          className="bg-purple-600 text-white rounded px-3 py-2 disabled:opacity-50"
+          className="rounded px-3 py-2.5 text-white mt-2 transition-opacity disabled:opacity-50"
+          style={{ backgroundColor: '#2F6F4F', fontFamily: "'Inter', sans-serif", fontWeight: 500 }}
         >
-          {loading ? 'Registering...' : 'Register'}
+          {loading ? 'Creating account...' : 'Create account'}
         </button>
-
-        <p className="text-center text-sm text-gray-600">
-          Already have an account?{' '}
-          <Link to="/login" className="text-purple-600 underline">
-            Login
-          </Link>
-        </p>
-
-        <p className="text-center text-sm text-gray-600">
-          Want to sell?{' '}
-          <Link to="/seller/register" className="text-purple-600 underline">
-            Become a seller →
-          </Link>
-        </p>
       </form>
-    </div>
+
+      <div
+        className="mt-6 pt-5 flex flex-col gap-2"
+        style={{ borderTop: '1px solid #E4DCC9', fontFamily: "'Inter', sans-serif" }}
+      >
+        <p className="text-sm text-center" style={{ color: '#1F2A24' }}>
+          Already have an account?{' '}
+          <Link to="/login" className="font-medium underline" style={{ color: '#2F6F4F' }}>
+            Sign in
+          </Link>
+        </p>
+        <p className="text-sm text-center">
+          <Link to="/seller/register" className="font-medium underline" style={{ color: '#D97B3F' }}>
+            Want to sell? Become a seller →
+          </Link>
+        </p>
+      </div>
+    </AuthLayout>
   );
 }
 

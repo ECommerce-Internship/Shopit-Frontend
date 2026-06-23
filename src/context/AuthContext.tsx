@@ -43,8 +43,6 @@ function buildAuthUser(data: LoginResponse): AuthUser {
   try {
     const claims = decodeJwt<Record<string, unknown>>(data.accessToken);
     role = (claims[ROLE_CLAIM] as string) ?? role;
-    // storeIds claim does not exist on the backend yet (pending SCRUM-30 follow-up).
-    // Defaulting to empty until that lands.
     storeIds = (claims['storeIds'] as string[]) ?? [];
   } catch {
     // If decoding fails for any reason, fall back to the plain response fields.
@@ -88,7 +86,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   useEffect(() => {
-    // Called by the Axios response interceptor when a token refresh fails.
     authStore.registerLogoutHandler(() => {
       setAccessToken(null);
       setRefreshToken(null);
@@ -108,4 +105,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 export function useAuth() {
   const context = useContext(AuthContext);
   if (!context) {
-    throw new
+    throw new Error('useAuth must be used within an AuthProvider');
+  }
+  return context;
+}
+
+export function getRedirectPathForRole(role: string): string {
+  switch (role) {
+    case 'Admin':
+      return '/admin';
+    case 'Seller':
+      return '/seller';
+    default:
+      return '/products';
+  }
+}

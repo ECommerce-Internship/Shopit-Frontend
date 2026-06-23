@@ -3,6 +3,12 @@ import { Link, useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import axiosInstance from '../api/axiosInstance';
 import { useAuth, getRedirectPathForRole } from '../context/AuthContext';
+import { AuthLayout } from '../components/AuthLayout';
+
+const inputStyle = {
+  fontFamily: "'Inter', sans-serif",
+  borderColor: '#E4DCC9',
+};
 
 function LoginPage() {
   const [email, setEmail] = useState('');
@@ -51,58 +57,76 @@ function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-100">
-      <form
-        onSubmit={handleSubmit}
-        className="bg-white p-8 rounded-lg shadow-md w-80 flex flex-col gap-4"
+    <AuthLayout eyebrow="Sign in">
+      <h2
+        className="text-2xl mb-6"
+        style={{ fontFamily: "'Fraunces', serif", fontWeight: 500, color: '#1F2A24' }}
       >
-        <h1 className="text-2xl font-bold text-purple-600 text-center">Log in</h1>
+        Welcome back
+      </h2>
 
+      <form onSubmit={handleSubmit} className="flex flex-col gap-4">
         <div className="flex flex-col gap-1">
+          <label
+            className="text-[11px] uppercase tracking-[0.1em]"
+            style={{ fontFamily: "'IBM Plex Mono', monospace", color: '#1F2A24' }}
+          >
+            Email
+          </label>
           <input
             type="email"
-            placeholder="Email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            className="border border-gray-300 rounded px-3 py-2"
+            className="border rounded px-3 py-2 outline-none focus:ring-2"
+            style={{ ...inputStyle, '--tw-ring-color': '#2F6F4F' } as React.CSSProperties}
           />
-          {emailError && <p className="text-red-500 text-sm">{emailError}</p>}
+          {emailError && <p className="text-sm" style={{ color: '#D97B3F' }}>{emailError}</p>}
         </div>
 
         <div className="flex flex-col gap-1">
+          <label
+            className="text-[11px] uppercase tracking-[0.1em]"
+            style={{ fontFamily: "'IBM Plex Mono', monospace", color: '#1F2A24' }}
+          >
+            Password
+          </label>
           <input
             type="password"
-            placeholder="Password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            className="border border-gray-300 rounded px-3 py-2"
+            className="border rounded px-3 py-2 outline-none focus:ring-2"
+            style={{ ...inputStyle, '--tw-ring-color': '#2F6F4F' } as React.CSSProperties}
           />
-          {passwordError && <p className="text-red-500 text-sm">{passwordError}</p>}
+          {passwordError && <p className="text-sm" style={{ color: '#D97B3F' }}>{passwordError}</p>}
         </div>
 
         <button
           type="submit"
           disabled={loading}
-          className="bg-purple-600 text-white rounded px-3 py-2 disabled:opacity-50"
+          className="rounded px-3 py-2.5 text-white mt-2 transition-opacity disabled:opacity-50"
+          style={{ backgroundColor: '#2F6F4F', fontFamily: "'Inter', sans-serif", fontWeight: 500 }}
         >
-          {loading ? 'Logging in...' : 'Log in'}
+          {loading ? 'Signing in...' : 'Sign in'}
         </button>
-
-        <p className="text-center text-sm text-gray-600">
-          Don't have an account?{' '}
-          <Link to="/register" className="text-purple-600 underline">
-            Register
-          </Link>
-        </p>
-
-        <p className="text-center text-sm text-gray-600">
-          Want to sell?{' '}
-          <Link to="/seller/register" className="text-purple-600 underline">
-            Become a seller →
-          </Link>
-        </p>
       </form>
-    </div>
+
+      <div
+        className="mt-6 pt-5 flex flex-col gap-2"
+        style={{ borderTop: '1px solid #E4DCC9', fontFamily: "'Inter', sans-serif" }}
+      >
+        <p className="text-sm text-center" style={{ color: '#1F2A24' }}>
+          New here?{' '}
+          <Link to="/register" className="font-medium underline" style={{ color: '#2F6F4F' }}>
+            Create an account
+          </Link>
+        </p>
+        <p className="text-sm text-center">
+          <Link to="/seller/register" className="font-medium underline" style={{ color: '#D97B3F' }}>
+            Want to sell? Become a seller →
+          </Link>
+        </p>
+      </div>
+    </AuthLayout>
   );
 }
 
