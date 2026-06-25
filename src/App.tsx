@@ -13,6 +13,7 @@ import Seller from './pages/Seller';
 import { ProtectedRoute } from './components/ProtectedRoute';
 import { AdminRoute } from './components/AdminRoute';
 import { SellerRoute } from './components/SellerRoute';
+import CartPage from './pages/CartPage';
 
 const HIDDEN_NAVBAR_PATHS = ['/login', '/register', '/auth/google/callback'];
 
@@ -33,7 +34,7 @@ function App() {
           <Route path="/products/:id" element={<ProductDetailPage />} />
           <Route path="/account" element={<AccountPage />} />
           <Route path="/dashboard" element={<Dashboard />} />
-          <Route path="/cart" element={<div className="p-6">Cart coming soon.</div>} />
+          <Route path="/cart" element={<CartPage />} />
           <Route element={<AdminRoute />}>
             <Route path="/admin" element={<Admin />} />
           </Route>
