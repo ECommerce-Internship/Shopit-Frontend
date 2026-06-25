@@ -1,6 +1,6 @@
 import { Routes, Route, useLocation } from 'react-router-dom';
 import { Navbar } from './components/Navbar';
-import Home from './pages/Home';
+import LandingPage from './pages/LandingPage';
 import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
 import ProductListingPage from './pages/ProductListingPage';
@@ -15,7 +15,7 @@ import { AdminRoute } from './components/AdminRoute';
 import { SellerRoute } from './components/SellerRoute';
 import CartPage from './pages/CartPage';
 
-const HIDDEN_NAVBAR_PATHS = ['/login', '/register', '/auth/google/callback'];
+const HIDDEN_NAVBAR_PATHS = ['/', '/login', '/register', '/auth/google/callback'];
 
 function App() {
   const location = useLocation();
@@ -25,7 +25,7 @@ function App() {
     <>
       {showNavbar && <Navbar />}
       <Routes>
-        <Route path="/" element={<Home />} />
+        <Route path="/" element={<LandingPage />} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
         <Route path="/auth/google/callback" element={<GoogleCallbackPage />} />
