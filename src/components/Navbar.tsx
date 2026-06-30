@@ -29,6 +29,14 @@ export function Navbar() {
           Products
         </Link>
 
+        <Link
+          to="/sell"
+          className="text-sm"
+          style={{ color: '#2F6F4F', fontFamily: "'Inter', sans-serif", fontWeight: 500 }}
+        >
+          Sell on Shopit
+        </Link>
+
         <Link to="/cart" className="relative" aria-label="Cart">
           <ShoppingCart size={22} color="#1F2A24" />
           {itemCount > 0 && (
@@ -47,8 +55,17 @@ export function Navbar() {
           )}
         </Link>
 
-        {user && (
+        {user ? (
           <div className="flex items-center gap-3">
+            {user.role === 'Seller' && (
+              <Link
+                to="/seller/stores"
+                className="text-sm"
+                style={{ color: '#2F6F4F', fontFamily: "'Inter', sans-serif" }}
+              >
+                My Stores
+              </Link>
+            )}
             <Link
               to="/account"
               className="text-sm hover:underline"
@@ -64,6 +81,14 @@ export function Navbar() {
               Log out
             </button>
           </div>
+        ) : (
+          <Link
+            to="/login"
+            className="text-sm"
+            style={{ color: '#1F2A24', fontFamily: "'Inter', sans-serif" }}
+          >
+            Sign in
+          </Link>
         )}
       </div>
     </nav>

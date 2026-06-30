@@ -19,6 +19,8 @@ import OrderConfirmationPage from './pages/OrderConfirmationPage';
 import OrderDetailPage from './pages/OrderDetailPage';
 import AdminPaymentsPage from './pages/AdminPaymentsPage';
 import AdminReviewsPage from './pages/AdminReviewsPage';
+import SellerRegisterPage from './pages/SellerRegisterPage';
+import MyStoresPage from './pages/MyStoresPage';
 
 const HIDDEN_NAVBAR_PATHS = ['/', '/login', '/register', '/auth/google/callback'];
 
@@ -34,6 +36,7 @@ function App() {
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
         <Route path="/auth/google/callback" element={<GoogleCallbackPage />} />
+        <Route path="/sell" element={<SellerRegisterPage />} />
         <Route element={<ProtectedRoute />}>
           <Route path="/products" element={<ProductListingPage />} />
           <Route path="/products/:id" element={<ProductDetailPage />} />
@@ -50,6 +53,7 @@ function App() {
           </Route>
           <Route element={<SellerRoute />}>
             <Route path="/seller" element={<Seller />} />
+            <Route path="/seller/stores" element={<MyStoresPage />} />
           </Route>
         </Route>
       </Routes>

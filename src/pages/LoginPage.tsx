@@ -122,7 +122,7 @@ function LoginPage() {
             </p>
           )}
         </div>
-
+        
         <button
           type="submit"
           disabled={loading}
@@ -167,6 +167,7 @@ function LoginPage() {
         Login with Google
       </button>
 
+        
       <div
         className="mt-6 pt-5 flex flex-col gap-2"
         style={{ borderTop: '1px solid #E4DCC9', fontFamily: "'Inter', sans-serif" }}
@@ -178,7 +179,7 @@ function LoginPage() {
           </Link>
         </p>
         <p className="text-sm text-center">
-          <Link to="/seller/register" className="font-medium underline" style={{ color: '#D97B3F' }}>
+          <Link to="/sell" className="font-medium underline" style={{ color: '#D97B3F' }}>
             Want to sell? Become a seller →
           </Link>
         </p>
