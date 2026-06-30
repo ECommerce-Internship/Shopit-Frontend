@@ -14,16 +14,20 @@ import { ProtectedRoute } from './components/ProtectedRoute';
 import { AdminRoute } from './components/AdminRoute';
 import { SellerRoute } from './components/SellerRoute';
 import CartPage from './pages/CartPage';
+import { ChatButton } from './components/ChatButton';
+import { useAuth } from './context/AuthContext';
 
 const HIDDEN_NAVBAR_PATHS = ['/', '/login', '/register', '/auth/google/callback'];
 
 function App() {
   const location = useLocation();
   const showNavbar = !HIDDEN_NAVBAR_PATHS.includes(location.pathname);
+  const { user } = useAuth();
 
   return (
     <>
       {showNavbar && <Navbar />}
+      {user && <ChatButton />}
       <Routes>
         <Route path="/" element={<LandingPage />} />
         <Route path="/login" element={<LoginPage />} />
