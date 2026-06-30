@@ -18,6 +18,7 @@ import CheckoutPage from './pages/CheckoutPage';
 import OrderConfirmationPage from './pages/OrderConfirmationPage';
 import OrderDetailPage from './pages/OrderDetailPage';
 import AdminPaymentsPage from './pages/AdminPaymentsPage';
+import AdminReviewsPage from './pages/AdminReviewsPage';
 
 const HIDDEN_NAVBAR_PATHS = ['/', '/login', '/register', '/auth/google/callback'];
 
@@ -45,6 +46,7 @@ function App() {
           <Route element={<AdminRoute />}>
             <Route path="/admin" element={<Admin />} />
             <Route path="/admin/payments" element={<AdminPaymentsPage />} />
+            <Route path="/admin/reviews" element={<AdminReviewsPage />} />
           </Route>
           <Route element={<SellerRoute />}>
             <Route path="/seller" element={<Seller />} />
