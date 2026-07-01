@@ -9,6 +9,14 @@ export type OrderItem = {
   subtotal: number;
 };
 
+export type StoreOrder = {
+  storeId: number;
+  storeName: string;
+  status: string;
+  subTotal: number;
+  items: OrderItem[];
+};
+
 export type Order = {
   id: number;
   status: string;
@@ -17,8 +25,8 @@ export type Order = {
   shippingAddress: string;
   createdAt: string;
   items: OrderItem[];
+  storeOrders: StoreOrder[];
 };
-
 export type PaymentResponse = {
   id: number;
   orderId: number;
