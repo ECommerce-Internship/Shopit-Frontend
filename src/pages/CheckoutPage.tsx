@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { Loader2, CreditCard, Wallet } from 'lucide-react';
@@ -51,26 +51,32 @@ function CheckoutPage() {
     queryFn: fetchCart,
   });
 
-  const checkoutMutation = useMutation({
-    mutationFn: async () => {
-      const shippingAddress = `${form.street}, ${form.city}, ${form.state} ${form.postalCode}, ${form.country}`;
-      const order = await placeOrder(shippingAddress);
-      await processPayment(order.id, paymentMethod);
-      return order;
-    },
-    onSuccess: (order) => {
-      navigate(`/orders/${order.id}/confirmation`);
-    },
-    onError: (error: unknown) => {
-      const err = error as { response?: { status?: number; data?: { message?: string } } };
-      if (err?.response?.status === 400) {
-        const msg = err?.response?.data?.message ?? 'Some items are out of stock.';
-        setOutOfStockError(msg);
-      } else {
-        toast.error('Something went wrong. Please try again.');
-      }
-    },
-  });
+const lastOrderIdRef = useRef<number | null>(null);
+
+const checkoutMutation = useMutation({
+  mutationFn: async () => {
+    const shippingAddress = `${form.street}, ${form.city}, ${form.state} ${form.postalCode}, ${form.country}`;
+    const order = await placeOrder(shippingAddress);
+    lastOrderIdRef.current = order.id;
+    await processPayment(order.id, paymentMethod);
+    return order;
+  },
+  onSuccess: (order) => {
+    navigate(`/orders/${order.id}/confirmation`);
+  },
+  onError: (error: unknown) => {
+    const err = error as { response?: { status?: number; data?: { message?: string } } };
+    if (err?.response?.status === 400) {
+      const msg = err?.response?.data?.message ?? 'Some items are out of stock.';
+      setOutOfStockError(msg);
+    } else if (err?.response?.status === 409 && lastOrderIdRef.current) {
+      // Order was created and paid — just navigate
+      navigate(`/orders/${lastOrderIdRef.current}/confirmation`);
+    } else {
+      toast.error('Something went wrong. Please try again.');
+    }
+  },
+});
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));

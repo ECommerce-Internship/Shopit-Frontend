@@ -173,8 +173,8 @@ function ProductDetailPage() {
               {pageTitle}
             </h1>
 
-            {/* Sold by — only renders once backend returns store data (SCRUM-133) */}
-            {product.storeName && (
+            
+            {product.storeName && product.storeSlug &&(
               <Link
                 to={`/stores/${product.storeSlug}`}
                 className="text-[11px] uppercase tracking-[0.1em] hover:underline -mt-2"
@@ -182,7 +182,7 @@ function ProductDetailPage() {
               >
                 Sold by {product.storeName}
               </Link>
-            )}
+          )}
 
             <div className="flex items-center gap-2">
               <StarRating rating={product.averageRating} />
