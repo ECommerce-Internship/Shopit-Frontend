@@ -185,7 +185,7 @@ function RegisterPage() {
           </Link>
         </p>
         <p className="text-sm text-center">
-          <Link to="/seller/register" className="font-medium underline" style={{ color: '#D97B3F' }}>
+          <Link to="/sell" className="font-medium underline" style={{ color: '#D97B3F' }}>
             Want to sell? Become a seller →
           </Link>
         </p>

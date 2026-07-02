@@ -33,17 +33,26 @@ function App() {
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
         <Route path="/auth/google/callback" element={<GoogleCallbackPage />} />
+        <Route path="/sell" element={<SellerRegisterPage />} />
+        <Route path="/stores/:slug" element={<StorefrontPage />} />
         <Route element={<ProtectedRoute />}>
           <Route path="/products" element={<ProductListingPage />} />
           <Route path="/products/:id" element={<ProductDetailPage />} />
           <Route path="/account" element={<AccountPage />} />
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/cart" element={<CartPage />} />
+          <Route path="/checkout" element={<CheckoutPage />} />
+          <Route path="/orders/:id" element={<OrderDetailPage />} />
+          <Route path="/orders/:id/confirmation" element={<OrderConfirmationPage />} />
+          <Route path="/orders" element={<MyOrdersPage />} />
           <Route element={<AdminRoute />}>
             <Route path="/admin" element={<Admin />} />
+            <Route path="/admin/payments" element={<AdminPaymentsPage />} />
+            <Route path="/admin/reviews" element={<AdminReviewsPage />} />
           </Route>
           <Route element={<SellerRoute />}>
             <Route path="/seller" element={<Seller />} />
+            <Route path="/seller/stores" element={<MyStoresPage />} />
           </Route>
         </Route>
       </Routes>

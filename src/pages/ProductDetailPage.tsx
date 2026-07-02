@@ -7,6 +7,9 @@ import { fetchProductById } from '../api/productsApi';
 import { fetchProductReviews } from '../api/reviewsApi';
 import { addCartItem } from '../api/cartApi';
 import { useCart } from '../context/CartContext';
+import WriteReviewForm from '../components/WriteReviewForm';
+import { useAuth } from '../context/AuthContext';
+
 
 const inkText = { color: '#1F2A24', fontFamily: "'Inter', sans-serif" };
 const mutedText = { color: '#8A8273', fontFamily: "'Inter', sans-serif" };
@@ -72,6 +75,7 @@ function ProductDetailPage() {
   const { id } = useParams<{ id: string }>();
   const { setItemCount } = useCart();
   const [quantity] = useState(1);
+  const { user } = useAuth();
 
   const {
     data: product,
@@ -169,8 +173,8 @@ function ProductDetailPage() {
               {pageTitle}
             </h1>
 
-            {/* Sold by — only renders once backend returns store data (SCRUM-133) */}
-            {product.storeName && (
+            
+            {product.storeName && product.storeSlug &&(
               <Link
                 to={`/stores/${product.storeSlug}`}
                 className="text-[11px] uppercase tracking-[0.1em] hover:underline -mt-2"
@@ -178,7 +182,7 @@ function ProductDetailPage() {
               >
                 Sold by {product.storeName}
               </Link>
-            )}
+          )}
 
             <div className="flex items-center gap-2">
               <StarRating rating={product.averageRating} />
@@ -262,6 +266,7 @@ function ProductDetailPage() {
               ))}
             </div>
           )}
+          {user && <WriteReviewForm productId={Number(id)} />}
         </div>
       </div>
     </div>

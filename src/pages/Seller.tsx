@@ -1,4 +1,5 @@
 import { useAuth } from '../context/AuthContext';
+import { Link } from 'react-router-dom';
 
 function Seller() {
   const { user } = useAuth();
@@ -10,6 +11,7 @@ function Seller() {
         <h1 className="text-2xl font-bold text-purple-600 mb-2">Seller Dashboard</h1>
         <p className="text-gray-600 mb-4">
           Welcome, {user?.firstName} {user?.lastName}
+          <Link to="/seller/stores">View my stores</Link>
         </p>
         {!hasApprovedStore && (
           <div className="bg-yellow-50 border border-yellow-300 text-yellow-800 text-sm rounded p-3">
