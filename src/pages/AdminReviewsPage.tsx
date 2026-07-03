@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Loader2 } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { AdminTabs } from '../components/AdminTabs';
 import axiosInstance from '../api/axiosInstance';
 import { adminDeleteReview } from '../api/reviewsApi';
 import type { Review } from '../types/review';
@@ -96,7 +97,7 @@ function AdminReviewsPage() {
   const totalPages = Math.ceil(totalCount / 10);
 
   return (
-    <div style={{ minHeight: '100vh', background: '#FBF7F0', fontFamily: "'Inter', sans-serif", color: '#1F2A24', padding: '40px' }}>
+    <div className="admin-enter" style={{ minHeight: '100vh', background: '#FBF7F0', fontFamily: "'Inter', sans-serif", color: '#1F2A24', padding: '40px' }}>
       {selectedReview && (
         <DeleteModal
           review={selectedReview}
@@ -106,32 +107,14 @@ function AdminReviewsPage() {
         />
       )}
 
-      <div style={{ maxWidth: '1080px', margin: '0 auto' }}>
+      <div style={{ maxWidth: '1240px', margin: '0 auto', display: 'flex', gap: '40px', alignItems: 'flex-start' }}>
+        <AdminTabs active="Reviews" />
+        <div style={{ flex: 1, minWidth: 0 }}>
 
         {/* Header */}
         <div style={{ marginBottom: '8px' }}>
           <div style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: '11px', letterSpacing: '0.12em', textTransform: 'uppercase', color: '#8A8273', marginBottom: '8px' }}>Shopit Admin</div>
           <h1 style={{ fontFamily: "'Fraunces', serif", fontWeight: 600, fontSize: '34px', lineHeight: 1, margin: 0 }}>Reviews</h1>
-        </div>
-
-        {/* Nav tabs */}
-        <div style={{ display: 'flex', gap: '26px', borderBottom: '1px solid #E4DCC9', margin: '24px 0 22px' }}>
-          {['Orders', 'Payments', 'Reviews', 'Settings'].map((tab) => (
-            <div
-              key={tab}
-              style={{
-                fontSize: '13.5px',
-                fontWeight: tab === 'Reviews' ? 600 : 400,
-                color: tab === 'Reviews' ? '#1F2A24' : '#8A8273',
-                paddingBottom: '12px',
-                borderBottom: tab === 'Reviews' ? '2px solid #2F6F4F' : 'none',
-                marginBottom: '-1px',
-                cursor: 'pointer',
-              }}
-            >
-              {tab}
-            </div>
-          ))}
         </div>
 
         {/* Table */}
@@ -184,6 +167,7 @@ function AdminReviewsPage() {
               <button onClick={() => setPage((p) => Math.min(totalPages, p + 1))} disabled={page >= totalPages} style={{ border: '1px solid #E4DCC9', background: '#fff', color: page >= totalPages ? '#C2BBAA' : '#1F2A24', borderRadius: '8px', padding: '7px 12px', fontFamily: "'Inter', sans-serif", fontSize: '12.5px', cursor: page >= totalPages ? 'not-allowed' : 'pointer' }}>Next</button>
             </div>
           </div>
+        </div>
         </div>
       </div>
     </div>

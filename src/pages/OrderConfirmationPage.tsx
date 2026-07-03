@@ -1,7 +1,7 @@
 import { Link, useParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { CheckCircle2 } from 'lucide-react';
-import { getOrderById } from 'C:/Users/User/Desktop/Internship Aspire/Shopit/Shopit-Frontend/src/api/orderApi.ts';
+import { getOrderById } from '../api/orderApi';
 
 const inkText = { color: '#1F2A24', fontFamily: "'Inter', sans-serif" };
 const mutedText = { color: '#8A8273', fontFamily: "'Inter', sans-serif" };

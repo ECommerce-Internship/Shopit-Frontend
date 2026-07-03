@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Loader2 } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { AdminTabs } from '../components/AdminTabs';
 import {
   getAllPayments,
   refundPayment,
@@ -82,7 +83,7 @@ function AdminPaymentsPage() {
   ];
 
   return (
-    <div style={{ minHeight: '100vh', background: '#FBF7F0', fontFamily: "'Inter', sans-serif", color: '#1F2A24', padding: '40px' }}>
+    <div className="admin-enter" style={{ minHeight: '100vh', background: '#FBF7F0', fontFamily: "'Inter', sans-serif", color: '#1F2A24', padding: '40px' }}>
       {selectedPayment && (
         <RefundModal
           payment={selectedPayment}
@@ -92,7 +93,9 @@ function AdminPaymentsPage() {
         />
       )}
 
-      <div style={{ maxWidth: '1080px', margin: '0 auto' }}>
+      <div style={{ maxWidth: '1240px', margin: '0 auto', display: 'flex', gap: '40px', alignItems: 'flex-start' }}>
+        <AdminTabs active="Payments" />
+        <div style={{ flex: 1, minWidth: 0 }}>
 
         {/* Header */}
         <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', gap: '24px', marginBottom: '8px' }}>
@@ -103,7 +106,7 @@ function AdminPaymentsPage() {
         </div>
 
         {/* Filter bar */}
-        <div style={{ display: 'flex', gap: '12px', alignItems: 'center', margin: '24px 0 18px' }}>
+        <div style={{ display: 'flex', gap: '12px', alignItems: 'center', margin: '0 0 18px' }}>
           <div style={{ display: 'flex', gap: '6px', background: '#fff', border: '1px solid #E4DCC9', borderRadius: '11px', padding: '4px' }}>
             {filterButtons.map((btn) => (
               <button
@@ -176,6 +179,7 @@ function AdminPaymentsPage() {
               );
             })
           )}
+        </div>
         </div>
       </div>
     </div>
