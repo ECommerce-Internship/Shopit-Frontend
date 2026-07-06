@@ -6,6 +6,9 @@ export type CartItem = {
   unitPrice: number;
   quantity: number;
   subtotal: number;
+  storeId: number;
+  storeName: string;
+  storeSlug: string;
 };
 
 export type Cart = {

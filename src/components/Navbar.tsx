@@ -42,6 +42,27 @@ export function Navbar() {
               aria-expanded={menuOpen}
               title={`${user.firstName} ${user.lastName}`}
               className="flex items-center justify-center rounded-full"
+        <Link
+          to="/products"
+          className="text-sm"
+          style={{ color: '#1F2A24', fontFamily: "'Inter', sans-serif" }}
+        >
+          Products
+        </Link>
+
+        <Link
+          to="/sell"
+          className="text-sm"
+          style={{ color: '#2F6F4F', fontFamily: "'Inter', sans-serif", fontWeight: 500 }}
+        >
+          Sell on Shopit
+        </Link>
+
+        <Link to="/cart" className="relative" aria-label="Cart">
+          <ShoppingCart size={22} color="#1F2A24" />
+          {itemCount > 0 && (
+            <span
+              className="absolute -top-2 -right-2 flex items-center justify-center rounded-full text-[10px] font-bold"
               style={{
                 width: '36px',
                 height: '36px',
@@ -56,6 +77,35 @@ export function Navbar() {
               }}
             >
               {user.firstName.charAt(0)}
+              {itemCount}
+            </span>
+          )}
+        </Link>
+
+        {user ? (
+          <div className="flex items-center gap-3">
+            {user.role === 'Seller' && (
+              <Link
+                to="/seller/stores"
+                className="text-sm"
+                style={{ color: '#2F6F4F', fontFamily: "'Inter', sans-serif" }}
+              >
+                My Stores
+              </Link>
+            )}
+            <Link
+              to="/account"
+              className="text-sm hover:underline"
+              style={{ color: '#1F2A24', fontFamily: "'Inter', sans-serif" }}
+            >
+              {user.firstName}
+            </Link>
+            <button
+              onClick={logout}
+              className="text-sm"
+              style={{ color: '#2F6F4F', fontFamily: "'Inter', sans-serif" }}
+            >
+              Log out
             </button>
 
             {menuOpen && (
@@ -101,6 +151,14 @@ export function Navbar() {
               </div>
             )}
           </div>
+        ) : (
+          <Link
+            to="/login"
+            className="text-sm"
+            style={{ color: '#1F2A24', fontFamily: "'Inter', sans-serif" }}
+          >
+            Sign in
+          </Link>
         )}
       </div>
     </nav>

@@ -1,6 +1,6 @@
-import { Link } from 'react-router-dom';
 import { Star } from 'lucide-react';
 import type { Product } from '../types/product';
+import { Link, useNavigate } from 'react-router-dom';
 
 type ProductCardProps = {
   product: Product;
@@ -22,6 +22,7 @@ function formatPrice(price: number): string {
 
 export function ProductCard({ product }: ProductCardProps) {
   const stockBadge = getStockBadge(product.stockQuantity);
+  const navigate = useNavigate();
 
   return (
     <Link
@@ -44,14 +45,15 @@ export function ProductCard({ product }: ProductCardProps) {
       </div>
 
       <div className="p-4 flex flex-col gap-2 flex-1">
-        {product.storeName && (
-          <span
-            className="text-[11px] uppercase tracking-[0.1em]"
-            style={{ color: '#D97B3F', fontFamily: "'IBM Plex Mono', monospace" }}
-          >
-            Sold by {product.storeName}
-          </span>
-        )}
+     {product.storeName && product.storeSlug && (
+      <span
+        onClick={(e) => { e.preventDefault(); e.stopPropagation(); navigate(`/stores/${product.storeSlug}`); }}
+        className="text-[11px] uppercase tracking-[0.1em] hover:underline w-fit cursor-pointer"
+        style={{ color: '#D97B3F', fontFamily: "'IBM Plex Mono', monospace" }}
+      >
+        Sold by {product.storeName}
+      </span>
+    )}
 
         <h3
           className="text-base leading-snug"

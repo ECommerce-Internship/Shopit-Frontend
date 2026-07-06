@@ -11,6 +11,17 @@ import type {
   UpdateProductRequest,
 } from '../types/product';
 
+export type StoreInfo = {
+  id: number;
+  name: string;
+  slug: string;
+  description: string | null;
+  status: string;
+  commissionRate: number;
+  ownerUserId: number;
+  createdAt: string;
+};
+
 export async function fetchProducts(filters: ProductFilters): Promise<PaginatedProducts> {
   const params: Record<string, string | number> = {
     page: filters.page,
@@ -111,5 +122,15 @@ export async function importProductsFromSftp(): Promise<ImportResult> {
 // Rate limited server-side (429).
 export async function generateProductContent(id: number): Promise<ProductContent> {
   const response = await axiosInstance.post<ProductContent>(`/api/v1/products/${id}/generate-content`);
+  return response.data;
+export async function fetchStorefront(slug: string): Promise<StoreInfo> {
+  const response = await axiosInstance.get<StoreInfo>(`/api/v1/stores/${slug}`);
+  return response.data;
+}
+
+export async function fetchStorefrontProducts(slug: string, page: number = 1, pageSize: number = 20): Promise<PaginatedProducts> {
+  const response = await axiosInstance.get<PaginatedProducts>(`/api/v1/stores/${slug}/products`, {
+    params: { pageNumber: page, pageSize },
+  });
   return response.data;
 }

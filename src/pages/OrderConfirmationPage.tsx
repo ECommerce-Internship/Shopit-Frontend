@@ -2,6 +2,7 @@ import { Link, useParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { CheckCircle2 } from 'lucide-react';
 import { getOrderById } from '../api/orderApi';
+import { getOrderById, type OrderItem } from '../api/orderApi';
 
 const inkText = { color: '#1F2A24', fontFamily: "'Inter', sans-serif" };
 const mutedText = { color: '#8A8273', fontFamily: "'Inter', sans-serif" };
@@ -38,14 +39,13 @@ function OrderConfirmationPage() {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center gap-4" style={{ backgroundColor: '#FBF7F0' }}>
         <p style={{ ...inkText, color: '#B14A2D' }}>Order not found.</p>
-        <Link to="/products" style={{ color: '#2F6F4F', fontFamily: "'Inter', sans-serif" }}>
-          Continue Shopping
-        </Link>
+        <Link to="/products" style={{ color: '#2F6F4F', fontFamily: "'Inter', sans-serif" }}>Continue Shopping</Link>
       </div>
     );
   }
 
   const shortId = `#${order.id.toString().padStart(8, '0')}`;
+  const hasStoreOrders = order.storeOrders && order.storeOrders.length > 0;
 
   return (
     <div className="min-h-screen" style={{ backgroundColor: '#FBF7F0' }}>
@@ -54,86 +54,87 @@ function OrderConfirmationPage() {
         {/* Success header */}
         <div className="flex flex-col items-center text-center mb-10">
           <CheckCircle2 size={56} color="#2F6F4F" className="mb-4" />
-          <h1
-            className="text-3xl mb-2"
-            style={{ color: '#1F2A24', fontFamily: "'Fraunces', serif", fontWeight: 500 }}
-          >
+          <h1 className="text-3xl mb-2" style={{ color: '#1F2A24', fontFamily: "'Fraunces', serif", fontWeight: 500 }}>
             Thank you for your order!
           </h1>
-          <p className="text-sm" style={mutedText}>
-            Order {shortId} has been placed successfully.
-          </p>
-          <p className="text-sm mt-1" style={mutedText}>
-            A confirmation email has been sent to your inbox.
-          </p>
+          <p className="text-sm" style={mutedText}>Order {shortId} has been placed successfully.</p>
+          <p className="text-sm mt-1" style={mutedText}>A confirmation email has been sent to your inbox.</p>
         </div>
 
-        {/* Order details card */}
-        <div
-          className="p-6 rounded-lg mb-6"
-          style={{ backgroundColor: '#FFFFFF', border: '1px solid #E4DCC9' }}
-        >
-          <p style={labelMono} className="mb-4">Items ordered</p>
+        {/* Per-store sub-orders */}
+        {hasStoreOrders ? (
+          <div className="flex flex-col gap-4 mb-6">
+            {order.storeOrders.map((storeOrder) => (
+              <div key={storeOrder.storeId} className="p-6 rounded-lg" style={{ backgroundColor: '#FFFFFF', border: '1px solid #E4DCC9' }}>
+                <div className="flex items-center justify-between mb-4">
+                  <p style={labelMono}>{storeOrder.storeName}</p>
+                  <span
+                    className="text-xs px-2 py-1 rounded-full"
+                    style={{ backgroundColor: '#F6EAD2', color: '#A87420', fontFamily: "'IBM Plex Mono', monospace" }}
+                  >
+                    {storeOrder.status}
+                  </span>
+                </div>
 
-          <div className="flex flex-col gap-3 mb-4">
-            {order.items.map((item) => (
-              <div key={item.id} className="flex justify-between text-sm" style={inkText}>
-                <span style={mutedText}>
-                  {item.productName} × {item.quantity}
-                </span>
-                <span>{formatPrice(item.subtotal)}</span>
+                <div className="flex flex-col gap-3 mb-4">
+                  {storeOrder.items.map((item: OrderItem) => (
+                    <div key={item.id} className="flex justify-between text-sm" style={inkText}>
+                      <span style={mutedText}>{item.productName} × {item.quantity}</span>
+                      <span>{formatPrice(item.subtotal)}</span>
+                    </div>
+                  ))}
+                </div>
+
+                <div className="flex justify-between pt-3" style={{ borderTop: '1px solid #E4DCC9' }}>
+                  <span className="text-sm" style={mutedText}>Store subtotal</span>
+                  <span className="text-sm font-medium" style={inkText}>{formatPrice(storeOrder.subTotal)}</span>
+                </div>
               </div>
             ))}
           </div>
+        ) : (
+          // Fallback: flat items list if no store orders
+          <div className="p-6 rounded-lg mb-6" style={{ backgroundColor: '#FFFFFF', border: '1px solid #E4DCC9' }}>
+            <p style={labelMono} className="mb-4">Items ordered</p>
+            <div className="flex flex-col gap-3">
+              {order.items.map((item) => (
+                <div key={item.id} className="flex justify-between text-sm" style={inkText}>
+                  <span style={mutedText}>{item.productName} × {item.quantity}</span>
+                  <span>{formatPrice(item.subtotal)}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
 
-          <div
-            className="flex flex-col gap-3 pt-4"
-            style={{ borderTop: '1px solid #E4DCC9' }}
-          >
+        {/* Order total */}
+        <div className="p-6 rounded-lg mb-4" style={{ backgroundColor: '#FFFFFF', border: '1px solid #E4DCC9' }}>
+          <div className="flex flex-col gap-3">
             {order.discountAmount > 0 && (
               <div className="flex justify-between text-sm">
                 <span style={mutedText}>Discount</span>
-                <span style={{ color: '#2F6F4F', fontFamily: "'Inter', sans-serif" }}>
-                  −{formatPrice(order.discountAmount)}
-                </span>
+                <span style={{ color: '#2F6F4F', fontFamily: "'Inter', sans-serif" }}>−{formatPrice(order.discountAmount)}</span>
               </div>
             )}
-
             <div className="flex justify-between">
               <span className="text-base font-medium" style={inkText}>Total paid</span>
-              <span
-                className="text-lg font-medium"
-                style={{ color: '#1F2A24', fontFamily: "'Fraunces', serif" }}
-              >
-                {formatPrice(order.totalAmount)}
-              </span>
+              <span className="text-lg font-medium" style={{ color: '#1F2A24', fontFamily: "'Fraunces', serif" }}>{formatPrice(order.totalAmount)}</span>
             </div>
           </div>
         </div>
 
         {/* Shipping address */}
-        <div
-          className="p-6 rounded-lg mb-8"
-          style={{ backgroundColor: '#FFFFFF', border: '1px solid #E4DCC9' }}
-        >
+        <div className="p-6 rounded-lg mb-8" style={{ backgroundColor: '#FFFFFF', border: '1px solid #E4DCC9' }}>
           <p style={labelMono} className="mb-2">Shipping to</p>
           <p className="text-sm" style={inkText}>{order.shippingAddress}</p>
         </div>
 
         {/* Action buttons */}
         <div className="flex flex-col sm:flex-row gap-3">
-          <Link
-            to="/orders"
-            className="flex-1 text-center px-6 py-3 rounded-md text-sm"
-            style={{ backgroundColor: '#2F6F4F', color: '#FFFFFF', fontFamily: "'Inter', sans-serif" }}
-          >
+          <Link to="/orders" className="flex-1 text-center px-6 py-3 rounded-md text-sm" style={{ backgroundColor: '#2F6F4F', color: '#FFFFFF', fontFamily: "'Inter', sans-serif" }}>
             View my orders
           </Link>
-          <Link
-            to="/products"
-            className="flex-1 text-center px-6 py-3 rounded-md text-sm"
-            style={{ border: '1px solid #E4DCC9', backgroundColor: '#FFFFFF', ...inkText }}
-          >
+          <Link to="/products" className="flex-1 text-center px-6 py-3 rounded-md text-sm" style={{ border: '1px solid #E4DCC9', backgroundColor: '#FFFFFF', ...inkText }}>
             Continue shopping
           </Link>
         </div>

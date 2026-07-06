@@ -24,21 +24,27 @@ import AdminOrdersPage from './pages/AdminOrdersPage';
 import AdminInventoryPage from './pages/AdminInventoryPage';
 import AdminDashboardPage from './pages/AdminDashboardPage';
 import AdminStoresPage from './pages/AdminStoresPage';
+import { ChatButton } from './components/ChatButton';
+import { useAuth } from './context/AuthContext';
 
 const HIDDEN_NAVBAR_PATHS = ['/', '/login', '/register', '/auth/google/callback'];
 
 function App() {
   const location = useLocation();
   const showNavbar = !HIDDEN_NAVBAR_PATHS.includes(location.pathname);
+  const { user } = useAuth();
 
   return (
     <>
       {showNavbar && <Navbar />}
+      {user && <ChatButton />}
       <Routes>
         <Route path="/" element={<LandingPage />} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
         <Route path="/auth/google/callback" element={<GoogleCallbackPage />} />
+        <Route path="/sell" element={<SellerRegisterPage />} />
+        <Route path="/stores/:slug" element={<StorefrontPage />} />
         <Route element={<ProtectedRoute />}>
           <Route path="/products" element={<ProductListingPage />} />
           <Route path="/products/:id" element={<ProductDetailPage />} />
@@ -48,6 +54,7 @@ function App() {
           <Route path="/checkout" element={<CheckoutPage />} />
           <Route path="/orders/:id" element={<OrderDetailPage />} />
           <Route path="/orders/:id/confirmation" element={<OrderConfirmationPage />} />
+          <Route path="/orders" element={<MyOrdersPage />} />
           <Route element={<AdminRoute />}>
             <Route path="/admin" element={<Navigate to="/admin/dashboard" replace />} />
             <Route path="/admin/dashboard" element={<AdminDashboardPage />} />
@@ -61,6 +68,7 @@ function App() {
           </Route>
           <Route element={<SellerRoute />}>
             <Route path="/seller" element={<Seller />} />
+            <Route path="/seller/stores" element={<MyStoresPage />} />
           </Route>
         </Route>
       </Routes>

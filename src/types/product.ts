@@ -11,10 +11,9 @@ export type Product = {
   averageRating: number;
   reviewCount: number;
   createdAt: string;
-  // Not yet returned by backend (SCRUM-133 pending) — optional until it lands.
-  storeId?: number;
-  storeName?: string;
-  storeSlug?: string;
+  storeId: number;
+  storeName: string;
+  storeSlug: string;
 };
 
 export type Category = {
