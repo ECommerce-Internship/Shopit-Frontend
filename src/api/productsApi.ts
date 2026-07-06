@@ -123,6 +123,8 @@ export async function importProductsFromSftp(): Promise<ImportResult> {
 export async function generateProductContent(id: number): Promise<ProductContent> {
   const response = await axiosInstance.post<ProductContent>(`/api/v1/products/${id}/generate-content`);
   return response.data;
+}
+
 export async function fetchStorefront(slug: string): Promise<StoreInfo> {
   const response = await axiosInstance.get<StoreInfo>(`/api/v1/stores/${slug}`);
   return response.data;
