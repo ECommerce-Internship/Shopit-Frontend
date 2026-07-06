@@ -73,13 +73,29 @@ export function Navbar() {
         {user ? (
           <div className="relative" ref={menuRef}>
             {user.role === 'Seller' && (
-              <Link
-                to="/seller/stores"
-                className="text-sm"
-                style={{ color: '#2F6F4F', fontFamily: "'Inter', sans-serif", marginRight: '16px' }}
-              >
-                My Stores
-              </Link>
+              <>
+                <Link
+                  to="/seller/products"
+                  className="text-sm"
+                  style={{ color: '#2F6F4F', fontFamily: "'Inter', sans-serif", marginRight: '16px' }}
+                >
+                  My Products
+                </Link>
+                <Link
+                  to="/seller/orders"
+                  className="text-sm"
+                  style={{ color: '#2F6F4F', fontFamily: "'Inter', sans-serif", marginRight: '16px' }}
+                >
+                  Orders
+                </Link>
+                <Link
+                  to="/seller/stores"
+                  className="text-sm"
+                  style={{ color: '#2F6F4F', fontFamily: "'Inter', sans-serif", marginRight: '16px' }}
+                >
+                  My Stores
+                </Link>
+              </>
             )}
             <button
               onClick={() => setMenuOpen((open) => !open)}
