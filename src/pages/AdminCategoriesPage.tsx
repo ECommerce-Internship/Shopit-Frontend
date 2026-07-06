@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { AdminTabs } from '../components/AdminTabs';
+import { SkeletonTableRow } from '../components/Skeleton';
 import { Loader2 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { fetchCategories } from '../api/productsApi';
@@ -210,8 +211,8 @@ function AdminCategoriesPage() {
         </div>
 
         {/* Table */}
-        <div style={{ background: '#fff', border: '1px solid #E4DCC9', borderRadius: '16px', overflow: 'hidden' }}>
-          <div style={{ display: 'grid', gridTemplateColumns: GRID, alignItems: 'center', gap: '14px', background: '#FBF7F0', borderBottom: '1px solid #E4DCC9', padding: '13px 22px' }}>
+        <div style={{ background: '#fff', border: '1px solid #E4DCC9', borderRadius: '16px', overflowX: 'auto' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: GRID, alignItems: 'center', gap: '14px', background: '#FBF7F0', borderBottom: '1px solid #E4DCC9', padding: '13px 22px', minWidth: '600px' }}>
             <div style={labelMono}>Name</div>
             <div style={labelMono}>Parent</div>
             <div style={labelMono}>Subcategories</div>
@@ -219,14 +220,14 @@ function AdminCategoriesPage() {
           </div>
 
           {isLoading ? (
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '80px 0' }}>
-              <Loader2 size={28} className="animate-spin" color="#2F6F4F" />
-            </div>
+            Array.from({ length: 6 }).map((_, i) => (
+              <SkeletonTableRow key={i} gridTemplateColumns={GRID} cellCount={4} />
+            ))
           ) : rows.length === 0 ? (
             <div style={{ padding: '64px 0', textAlign: 'center', color: '#8A8273', fontSize: '14px' }}>No categories yet.</div>
           ) : (
             rows.map(({ category, depth }) => (
-              <div key={category.id} style={{ display: 'grid', gridTemplateColumns: GRID, alignItems: 'center', gap: '14px', padding: '16px 22px', borderBottom: '1px solid #F1EAD9' }}>
+              <div key={category.id} style={{ display: 'grid', gridTemplateColumns: GRID, alignItems: 'center', gap: '14px', padding: '16px 22px', borderBottom: '1px solid #F1EAD9', minWidth: '600px' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px', paddingLeft: `${depth * 22}px`, fontWeight: depth === 0 ? 600 : 400, fontSize: '14px', color: '#1F2A24' }}>
                   {depth > 0 && <span style={{ color: '#C2BBAA' }}>↳</span>}
                   {category.name}

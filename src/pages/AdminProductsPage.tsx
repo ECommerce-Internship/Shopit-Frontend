@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { AdminTabs } from '../components/AdminTabs';
+import { SkeletonTableRow } from '../components/Skeleton';
 import { Loader2 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import {
@@ -467,8 +468,8 @@ function AdminProductsPage() {
         </div>
 
         {/* Table */}
-        <div style={{ background: '#fff', border: '1px solid #E4DCC9', borderRadius: '16px', overflow: 'hidden' }}>
-          <div style={{ display: 'grid', gridTemplateColumns: GRID, alignItems: 'center', gap: '14px', background: '#FBF7F0', borderBottom: '1px solid #E4DCC9', padding: '13px 22px' }}>
+        <div style={{ background: '#fff', border: '1px solid #E4DCC9', borderRadius: '16px', overflowX: 'auto' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: GRID, alignItems: 'center', gap: '14px', background: '#FBF7F0', borderBottom: '1px solid #E4DCC9', padding: '13px 22px', minWidth: '820px' }}>
             <div style={labelMono}>Image</div>
             {sortableHeader('Name', 'name')}
             <div style={labelMono}>SKU</div>
@@ -479,14 +480,14 @@ function AdminProductsPage() {
           </div>
 
           {isLoading ? (
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '80px 0' }}>
-              <Loader2 size={28} className="animate-spin" color="#2F6F4F" />
-            </div>
+            Array.from({ length: 8 }).map((_, i) => (
+              <SkeletonTableRow key={i} gridTemplateColumns={GRID} cellCount={7} />
+            ))
           ) : products.length === 0 ? (
             <div style={{ padding: '64px 0', textAlign: 'center', color: '#8A8273', fontSize: '14px' }}>No products found.</div>
           ) : (
             products.map((p) => (
-              <div key={p.id} style={{ display: 'grid', gridTemplateColumns: GRID, alignItems: 'center', gap: '14px', padding: '16px 22px', borderBottom: '1px solid #F1EAD9' }}>
+              <div key={p.id} style={{ display: 'grid', gridTemplateColumns: GRID, alignItems: 'center', gap: '14px', padding: '16px 22px', borderBottom: '1px solid #F1EAD9', minWidth: '820px' }}>
                 {p.imageUrl ? (
                   <img src={p.imageUrl} alt={p.name} style={{ width: 32, height: 32, borderRadius: 8, objectFit: 'cover', border: '1px solid #E4DCC9' }} />
                 ) : (

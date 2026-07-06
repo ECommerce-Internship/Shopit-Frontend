@@ -3,6 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Loader2, Check, X } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { AdminTabs } from '../components/AdminTabs';
+import { SkeletonTableRow } from '../components/Skeleton';
 import {
   fetchPendingStores,
   fetchAllStores,
@@ -275,8 +276,8 @@ function AdminStoresPage() {
         </div>
 
         {/* Table */}
-        <div style={{ background: '#fff', border: '1px solid #E4DCC9', borderRadius: '16px', overflow: 'hidden' }}>
-          <div style={{ display: 'grid', gridTemplateColumns: GRID, gap: '14px', padding: '13px 22px', background: '#FBF7F0', borderBottom: '1px solid #E4DCC9', ...labelMono }}>
+        <div style={{ background: '#fff', border: '1px solid #E4DCC9', borderRadius: '16px', overflowX: 'auto' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: GRID, gap: '14px', padding: '13px 22px', background: '#FBF7F0', borderBottom: '1px solid #E4DCC9', minWidth: '760px', ...labelMono }}>
             <div>Store</div>
             <div>Owner</div>
             <div>Slug</div>
@@ -286,16 +287,16 @@ function AdminStoresPage() {
           </div>
 
           {allQuery.isLoading ? (
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '64px' }}>
-              <Loader2 size={26} className="animate-spin" color="#2F6F4F" />
-            </div>
+            Array.from({ length: 6 }).map((_, i) => (
+              <SkeletonTableRow key={i} gridTemplateColumns={GRID} cellCount={6} />
+            ))
           ) : allStores.length === 0 ? (
             <div style={{ padding: '56px', textAlign: 'center', color: '#8A8273', fontSize: '14px' }}>No stores found.</div>
           ) : (
             allStores.map((store) => {
               const actions = rowActions(store);
               return (
-                <div key={store.id} style={{ display: 'grid', gridTemplateColumns: GRID, gap: '14px', alignItems: 'center', padding: '16px 22px', borderBottom: '1px solid #F1EAD9' }}>
+                <div key={store.id} style={{ display: 'grid', gridTemplateColumns: GRID, gap: '14px', alignItems: 'center', padding: '16px 22px', borderBottom: '1px solid #F1EAD9', minWidth: '760px' }}>
                   <div style={{ fontSize: '13.5px', color: '#1F2A24', fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{store.name}</div>
                   <div style={{ fontSize: '13px', color: '#5c5648', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{store.ownerName}</div>
                   <div style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: '12.5px', color: '#8A8273', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{store.slug}</div>

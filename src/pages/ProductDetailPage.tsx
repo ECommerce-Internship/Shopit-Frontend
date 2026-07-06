@@ -9,6 +9,7 @@ import { addCartItem } from '../api/cartApi';
 import { useCart } from '../context/CartContext';
 import WriteReviewForm from '../components/WriteReviewForm';
 import { useAuth } from '../context/AuthContext';
+import { Skeleton } from '../components/Skeleton';
 
 
 const inkText = { color: '#1F2A24', fontFamily: "'Inter', sans-serif" };
@@ -107,8 +108,20 @@ function ProductDetailPage() {
 
   if (isProductLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: '#FBF7F0' }}>
-        <p style={mutedText}>Loading product…</p>
+      <div className="min-h-screen" style={{ backgroundColor: '#FBF7F0' }}>
+        <div className="max-w-5xl mx-auto px-6 py-10">
+          <Skeleton className="h-4 w-32 mb-8" />
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
+            <Skeleton className="aspect-square rounded-lg" />
+            <div className="flex flex-col gap-4">
+              <Skeleton className="h-9 w-3/4" />
+              <Skeleton className="h-4 w-1/3" />
+              <Skeleton className="h-9 w-1/4" />
+              <Skeleton className="h-6 w-32 rounded-full" />
+              <Skeleton className="h-12 w-40 rounded-md mt-2" />
+            </div>
+          </div>
+        </div>
       </div>
     );
   }

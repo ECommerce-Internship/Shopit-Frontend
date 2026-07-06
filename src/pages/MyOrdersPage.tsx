@@ -1,8 +1,8 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import { Loader2 } from 'lucide-react';
 import { getMyOrders, type OrderSummary } from '../api/orderApi';
+import { Skeleton } from '../components/Skeleton';
 
 function formatPrice(price: number): string {
   return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(price);
@@ -91,8 +91,15 @@ function MyOrdersPage() {
         </p>
 
         {isLoading ? (
-          <div style={{ display: 'flex', justifyContent: 'center', padding: '48px' }}>
-            <Loader2 size={24} className="animate-spin" color="#8A8273" />
+          <div style={{ background: '#FFFFFF', border: '1px solid #E4DCC9', borderRadius: '16px', overflowX: 'auto' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: '1.1fr 1fr 1.1fr 1.4fr 0.9fr 0.9fr', alignItems: 'center', gap: '16px', padding: '16px 28px', borderBottom: '1px solid #E4DCC9', background: '#FBF7F0', minWidth: '700px' }}>
+              {Array.from({ length: 6 }).map((_, i) => <Skeleton key={i} className="h-3" style={{ width: '50%' }} />)}
+            </div>
+            {Array.from({ length: 5 }).map((_, row) => (
+              <div key={row} style={{ display: 'grid', gridTemplateColumns: '1.1fr 1fr 1.1fr 1.4fr 0.9fr 0.9fr', alignItems: 'center', gap: '16px', padding: '20px 28px', borderBottom: '1px solid #F0EADC', minWidth: '700px' }}>
+                {Array.from({ length: 6 }).map((_, i) => <Skeleton key={i} className="h-4" style={{ width: i === 5 ? '70%' : '85%' }} />)}
+              </div>
+            ))}
           </div>
         ) : allOrders.length === 0 ? (
           /* Empty state */
@@ -137,9 +144,9 @@ function MyOrdersPage() {
             </div>
 
             {/* Table */}
-            <div style={{ background: '#FFFFFF', border: '1px solid #E4DCC9', borderRadius: '16px', overflow: 'hidden' }}>
+            <div style={{ background: '#FFFFFF', border: '1px solid #E4DCC9', borderRadius: '16px', overflowX: 'auto' }}>
               {/* Head */}
-              <div style={{ display: 'grid', gridTemplateColumns: '1.1fr 1fr 1.1fr 1.4fr 0.9fr 0.9fr', alignItems: 'center', gap: '16px', padding: '16px 28px', borderBottom: '1px solid #E4DCC9', background: '#FBF7F0', fontFamily: "'IBM Plex Mono', monospace", fontSize: '11px', letterSpacing: '0.12em', textTransform: 'uppercase', color: '#8A8273' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: '1.1fr 1fr 1.1fr 1.4fr 0.9fr 0.9fr', alignItems: 'center', gap: '16px', padding: '16px 28px', borderBottom: '1px solid #E4DCC9', background: '#FBF7F0', fontFamily: "'IBM Plex Mono', monospace", fontSize: '11px', letterSpacing: '0.12em', textTransform: 'uppercase', color: '#8A8273', minWidth: '700px' }}>
                 <div>Order #</div><div>Date</div><div>Status</div><div>Items</div>
                 <div style={{ textAlign: 'right' }}>Total</div><div></div>
               </div>
@@ -151,7 +158,7 @@ function MyOrdersPage() {
                   <div
                     key={order.id}
                     className="order-row"
-                    style={{ display: 'grid', gridTemplateColumns: '1.1fr 1fr 1.1fr 1.4fr 0.9fr 0.9fr', alignItems: 'center', gap: '16px', padding: '20px 28px', borderBottom: '1px solid #F0EADC', background: hoveredRow === order.id ? '#FCFAF4' : '#FFFFFF', transition: 'background 0.15s ease' }}
+                    style={{ display: 'grid', gridTemplateColumns: '1.1fr 1fr 1.1fr 1.4fr 0.9fr 0.9fr', alignItems: 'center', gap: '16px', padding: '20px 28px', borderBottom: '1px solid #F0EADC', background: hoveredRow === order.id ? '#FCFAF4' : '#FFFFFF', transition: 'background 0.15s ease', minWidth: '700px' }}
                     onMouseEnter={() => setHoveredRow(order.id)}
                     onMouseLeave={() => setHoveredRow(null)}
                   >

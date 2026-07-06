@@ -32,6 +32,7 @@ import AdminInventoryPage from './pages/AdminInventoryPage';
 import AdminDashboardPage from './pages/AdminDashboardPage';
 import AdminStoresPage from './pages/AdminStoresPage';
 import { ChatButton } from './components/ChatButton';
+import { ErrorBoundary } from './components/ErrorBoundary';
 import { useAuth } from './context/AuthContext';
 
 const HIDDEN_NAVBAR_PATHS = ['/', '/login', '/register', '/auth/google/callback'];
@@ -45,7 +46,8 @@ function App() {
     <>
       {showNavbar && <Navbar />}
       {user && <ChatButton />}
-      <Routes>
+      <ErrorBoundary key={location.pathname}>
+        <Routes>
         <Route path="/" element={<LandingPage />} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
@@ -83,6 +85,7 @@ function App() {
           </Route>
         </Route>
       </Routes>
+      </ErrorBoundary>
     </>
   );
 }

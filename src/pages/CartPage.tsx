@@ -11,6 +11,8 @@ import {
   removeCoupon,
 } from '../api/cartApi';
 import type { CartItem } from '../types/cart';
+import { EmptyState } from '../components/EmptyState';
+import { Skeleton } from '../components/Skeleton';
 
 const inkText = { color: '#1F2A24', fontFamily: "'Inter', sans-serif" };
 const mutedText = { color: '#8A8273', fontFamily: "'Inter', sans-serif" };
@@ -96,8 +98,13 @@ function CartPage() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: '#FBF7F0' }}>
-        <p style={mutedText}>Loading cart…</p>
+      <div className="min-h-screen" style={{ backgroundColor: '#FBF7F0' }}>
+        <div className="max-w-5xl mx-auto px-6 py-10 flex flex-col gap-4">
+          <Skeleton className="h-8 w-40 mb-4" />
+          <Skeleton className="h-24 w-full rounded-lg" />
+          <Skeleton className="h-24 w-full rounded-lg" />
+          <Skeleton className="h-24 w-full rounded-lg" />
+        </div>
       </div>
     );
   }
@@ -107,14 +114,13 @@ function CartPage() {
 
   if (isEmpty) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center gap-6" style={{ backgroundColor: '#FBF7F0' }}>
-        <ShoppingCart size={64} color="#D9CFC0" />
-        <p className="text-2xl" style={{ color: '#1F2A24', fontFamily: "'Fraunces', serif", fontWeight: 500 }}>
-          Your cart is empty
-        </p>
-        <Link to="/products" className="px-6 py-3 rounded-md text-sm" style={{ backgroundColor: '#2F6F4F', color: '#FFFFFF', fontFamily: "'Inter', sans-serif" }}>
-          Shop Now
-        </Link>
+      <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: '#FBF7F0' }}>
+        <EmptyState
+          icon={<ShoppingCart size={64} color="#D9CFC0" />}
+          title="Your cart is empty"
+          ctaLabel="Shop Now"
+          ctaTo="/products"
+        />
       </div>
     );
   }
