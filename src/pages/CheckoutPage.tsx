@@ -4,7 +4,7 @@ import { useQuery, useMutation } from '@tanstack/react-query';
 import { Loader2, CreditCard, Wallet } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { fetchCart } from '../api/cartApi';
-import { placeOrder, processPayment } from 'C:/Users/User/Desktop/Internship Aspire/Shopit/Shopit-Frontend/src/api/orderApi.ts';
+import { placeOrder, processPayment } from '../api/orderApi';
 
 const inkText = { color: '#1F2A24', fontFamily: "'Inter', sans-serif" };
 const mutedText = { color: '#8A8273', fontFamily: "'Inter', sans-serif" };
