@@ -1,14 +1,14 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
+import { getMyStores } from '../api/SellerApi';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { Loader2 } from 'lucide-react';
 import {
-  getSellerSummary,
-  getSellerRevenue,
-  getSellerTopProducts,
-} from '../api/Dashboardapi';
-import { getMyStores } from '../api/SellerApi';
+  fetchSellerSummary,
+  fetchSellerRevenue,
+  fetchSellerTopProducts,
+} from '../api/dashboardApi';
 
 function formatPrice(price: number): string {
   return '$' + price.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
@@ -45,10 +45,10 @@ function KpiCard({ label, value, sub, iconBg, icon }: KpiCardProps) {
   );
 }
 
-const PERIOD_OPTIONS = [
+const PERIOD_OPTIONS: { label: string; value: 'day' | 'week' | 'monthly' }[] = [
   { label: 'Today', value: 'day' },
   { label: 'This week', value: 'week' },
-  { label: 'This month', value: 'month' },
+  { label: 'This month', value: 'monthly' },
 ];
 
 function DollarIcon() {
@@ -88,7 +88,7 @@ function NetIcon() {
 }
 
 function SellerDashboard() {
-  const [period, setPeriod] = useState('day');
+ const [period, setPeriod] = useState<'day' | 'week' | 'monthly'>('day');
 
   const { data: stores } = useQuery({
     queryKey: ['my-stores'],
@@ -97,17 +97,17 @@ function SellerDashboard() {
 
   const { data: summary, isLoading: summaryLoading } = useQuery({
     queryKey: ['seller-summary'],
-    queryFn: getSellerSummary,
+    queryFn: fetchSellerSummary,
   });
 
   const { data: revenue, isLoading: revenueLoading } = useQuery({
     queryKey: ['seller-revenue', period],
-    queryFn: () => getSellerRevenue(period),
+    queryFn: () => fetchSellerRevenue(period),
   });
 
   const { data: topProducts, isLoading: topLoading } = useQuery({
     queryKey: ['seller-top-products'],
-    queryFn: getSellerTopProducts,
+    queryFn: fetchSellerTopProducts,
   });
 
   const activeStore = stores?.find(s => s.status === 'Approved') ?? stores?.[0];
