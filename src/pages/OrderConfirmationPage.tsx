@@ -1,7 +1,6 @@
 import { Link, useParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { CheckCircle2 } from 'lucide-react';
-import { getOrderById } from '../api/orderApi';
 import { getOrderById, type OrderItem } from '../api/orderApi';
 
 const inkText = { color: '#1F2A24', fontFamily: "'Inter', sans-serif" };
