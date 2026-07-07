@@ -9,13 +9,24 @@ import GoogleCallbackPage from './pages/GoogleCallbackPage';
 import AccountPage from './pages/AccountPage';
 import Dashboard from './pages/Dashboard';
 import Admin from './pages/Admin';
-import Seller from './pages/Seller';
 import { ProtectedRoute } from './components/ProtectedRoute';
 import { AdminRoute } from './components/AdminRoute';
 import { SellerRoute } from './components/SellerRoute';
 import CartPage from './pages/CartPage';
 import { ChatButton } from './components/ChatButton';
 import { useAuth } from './context/AuthContext';
+import SellerDashboard from './pages/SellerDashboard';
+import AdminDashboard from './pages/AdminDashboard';
+import SellerRegisterPage from './pages/SellerRegisterPage';
+import StorefrontPage from './pages/StorefrontPage';
+import CheckoutPage from './pages/CheckoutPage';
+import OrderDetailPage from './pages/OrderDetailPage';
+import OrderConfirmationPage from './pages/OrderConfirmationPage';
+import MyOrdersPage from './pages/MyOrdersPage';
+import AdminPaymentsPage from './pages/AdminPaymentsPage';
+import AdminReviewsPage from './pages/AdminReviewsPage';
+import MyStoresPage from './pages/MyStoresPage';
+
 
 const HIDDEN_NAVBAR_PATHS = ['/', '/login', '/register', '/auth/google/callback'];
 
@@ -49,9 +60,10 @@ function App() {
             <Route path="/admin" element={<Admin />} />
             <Route path="/admin/payments" element={<AdminPaymentsPage />} />
             <Route path="/admin/reviews" element={<AdminReviewsPage />} />
+            <Route path="/admin/dashboard" element={<AdminDashboard />} />
           </Route>
           <Route element={<SellerRoute />}>
-            <Route path="/seller" element={<Seller />} />
+            <Route path="/seller" element={<SellerDashboard />} />
             <Route path="/seller/stores" element={<MyStoresPage />} />
           </Route>
         </Route>

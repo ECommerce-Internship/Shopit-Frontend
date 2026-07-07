@@ -13,6 +13,9 @@ function Admin() {
         <Link to="/admin/reviews" className="text-blue-600 underline block">
           View Reviews
         </Link>
+        <Link to="/admin/dashboard" className="text-blue-600 underline block mb-2">
+        Dashboard
+        </Link>
       </div>
     </div>
   );
