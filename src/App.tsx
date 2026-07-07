@@ -13,6 +13,9 @@ import SellerRegisterPage from './pages/SellerRegisterPage';
 import StorefrontPage from './pages/StorefrontPage';
 import MyOrdersPage from './pages/MyOrdersPage';
 import MyStoresPage from './pages/MyStoresPage';
+import SellerProductsPage from './pages/SellerProductsPage';
+import SellerProductFormPage from './pages/SellerProductFormPage';
+import SellerOrdersPage from './pages/SellerOrdersPage';
 import { ProtectedRoute } from './components/ProtectedRoute';
 import { AdminRoute } from './components/AdminRoute';
 import { SellerRoute } from './components/SellerRoute';
@@ -73,6 +76,10 @@ function App() {
           <Route element={<SellerRoute />}>
             <Route path="/seller" element={<Seller />} />
             <Route path="/seller/stores" element={<MyStoresPage />} />
+            <Route path="/seller/products" element={<SellerProductsPage />} />
+            <Route path="/seller/products/new" element={<SellerProductFormPage />} />
+            <Route path="/seller/products/:id/edit" element={<SellerProductFormPage />} />
+            <Route path="/seller/orders" element={<SellerOrdersPage />} />
           </Route>
         </Route>
       </Routes>

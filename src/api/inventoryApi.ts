@@ -20,6 +20,14 @@ export async function fetchInventory(): Promise<InventoryItem[]> {
   return response.data;
 }
 
+// Per-product inventory lookup — usable by a seller for their own product
+// (fetchInventory above is admin-only). Used to load the current
+// low-stock threshold before editing it.
+export async function fetchInventoryForProduct(productId: number): Promise<InventoryItem> {
+  const response = await axiosInstance.get<InventoryItem>(`/api/v1/inventory/${productId}`);
+  return response.data;
+}
+
 export async function updateStock(productId: number, quantity: number): Promise<InventoryItem> {
   const response = await axiosInstance.put<InventoryItem>(
     `/api/v1/inventory/${productId}/stock`,
