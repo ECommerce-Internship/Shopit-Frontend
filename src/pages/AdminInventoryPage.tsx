@@ -3,6 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Loader2, Pencil, Check, X, AlertTriangle } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { AdminTabs } from '../components/AdminTabs';
+import { SkeletonTableRow } from '../components/Skeleton';
 import { fetchInventory, updateStock, updateThreshold, type InventoryItem } from '../api/inventoryApi';
 
 const GRID = '1.6fr 1fr 1fr 1.1fr 1.1fr 1.1fr';
@@ -144,8 +145,8 @@ function AdminInventoryPage() {
         </div>
 
         {/* Table */}
-        <div style={{ background: '#fff', border: '1px solid #E4DCC9', borderRadius: '16px', overflow: 'hidden' }}>
-          <div style={{ display: 'grid', gridTemplateColumns: GRID, gap: '14px', padding: '13px 22px', background: '#FBF7F0', borderBottom: '1px solid #E4DCC9', ...labelMono }}>
+        <div style={{ background: '#fff', border: '1px solid #E4DCC9', borderRadius: '16px', overflowX: 'auto' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: GRID, gap: '14px', padding: '13px 22px', background: '#FBF7F0', borderBottom: '1px solid #E4DCC9', minWidth: '760px', ...labelMono }}>
             <div>Product</div>
             <div>SKU</div>
             <div>Store</div>
@@ -155,9 +156,9 @@ function AdminInventoryPage() {
           </div>
 
           {isLoading ? (
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '64px' }}>
-              <Loader2 size={26} className="animate-spin" color="#2F6F4F" />
-            </div>
+            Array.from({ length: 8 }).map((_, i) => (
+              <SkeletonTableRow key={i} gridTemplateColumns={GRID} cellCount={6} />
+            ))
           ) : filtered.length === 0 ? (
             <div style={{ padding: '56px', textAlign: 'center', color: '#8A8273', fontSize: '14px' }}>No inventory records found.</div>
           ) : (
@@ -173,6 +174,7 @@ function AdminInventoryPage() {
                   borderBottom: '1px solid #F1EAD9',
                   borderLeft: item.isLowStock ? '3px solid #B14A2D' : '3px solid transparent',
                   background: item.isLowStock ? '#FEFAF8' : '#fff',
+                  minWidth: '760px',
                 }}
               >
                 <div style={{ fontWeight: 600, fontSize: '14px', color: '#1F2A24' }}>{item.productName}</div>
