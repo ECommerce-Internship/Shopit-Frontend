@@ -169,11 +169,20 @@ function MyOrdersPage() {
                     <div><StatusBadge status={order.status} /></div>
                     <div style={{ fontSize: '14px', color: '#1F2A24', lineHeight: 1.35 }}>
                       <div>{order.itemCount} {order.itemCount === 1 ? 'item' : 'items'}</div>
-                      {order.storeOrders?.length > 0 && (
-                        <div style={{ fontSize: '12px', color: '#8A8273', marginTop: '2px' }}>
-                          {order.storeOrders.length} {order.storeOrders.length === 1 ? 'store' : 'stores'}
+                      {order.storeOrders?.length > 0 ? (
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '5px', marginTop: '7px' }}>
+                          {order.storeOrders.map((so) => {
+                            const c = badgeColors(so.status);
+                            return (
+                              <div key={so.storeId} style={{ display: 'flex', alignItems: 'center', gap: '7px' }}>
+                                <span style={{ display: 'inline-block', width: '6px', height: '6px', borderRadius: '50%', background: c.dot, flexShrink: 0 }}></span>
+                                <span style={{ fontSize: '12px', color: '#1F2A24', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{so.storeName}</span>
+                                <span style={{ fontSize: '11px', fontWeight: 600, color: c.fg, whiteSpace: 'nowrap' }}>{so.status}</span>
+                              </div>
+                            );
+                          })}
                         </div>
-                      )}
+                      ) : null}
                     </div>
                     <div style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: '14px', fontWeight: 500, textAlign: 'right' }}>
                       {formatPrice(order.totalAmount)}
