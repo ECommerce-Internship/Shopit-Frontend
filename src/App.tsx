@@ -8,7 +8,6 @@ import ProductDetailPage from './pages/ProductDetailPage';
 import GoogleCallbackPage from './pages/GoogleCallbackPage';
 import AccountPage from './pages/AccountPage';
 import Dashboard from './pages/Dashboard';
-import Seller from './pages/Seller';
 import SellerRegisterPage from './pages/SellerRegisterPage';
 import StorefrontPage from './pages/StorefrontPage';
 import MyOrdersPage from './pages/MyOrdersPage';
@@ -34,6 +33,10 @@ import AdminStoresPage from './pages/AdminStoresPage';
 import { ChatButton } from './components/ChatButton';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { useAuth } from './context/AuthContext';
+import SellerDashboard from './pages/SellerDashboard';
+
+
+
 
 const HIDDEN_NAVBAR_PATHS = ['/', '/login', '/register', '/auth/google/callback'];
 
@@ -76,7 +79,7 @@ function App() {
             <Route path="/admin/reviews" element={<AdminReviewsPage />} />
           </Route>
           <Route element={<SellerRoute />}>
-            <Route path="/seller" element={<Seller />} />
+            <Route path="/seller" element={<SellerDashboard />} />
             <Route path="/seller/stores" element={<MyStoresPage />} />
             <Route path="/seller/products" element={<SellerProductsPage />} />
             <Route path="/seller/products/new" element={<SellerProductFormPage />} />
