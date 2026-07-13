@@ -3,6 +3,7 @@ import { Navbar } from './components/Navbar';
 import LandingPage from './pages/LandingPage';
 import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
+import ForgotPasswordPage from './pages/ForgotPasswordPage';
 import ProductListingPage from './pages/ProductListingPage';
 import ProductDetailPage from './pages/ProductDetailPage';
 import GoogleCallbackPage from './pages/GoogleCallbackPage';
@@ -38,7 +39,7 @@ import SellerDashboard from './pages/SellerDashboard';
 
 
 
-const HIDDEN_NAVBAR_PATHS = ['/', '/login', '/register', '/auth/google/callback'];
+const HIDDEN_NAVBAR_PATHS = ['/', '/login', '/register', '/forgot-password', '/auth/google/callback'];
 
 function App() {
   const location = useLocation();
@@ -54,6 +55,7 @@ function App() {
         <Route path="/" element={<LandingPage />} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
+        <Route path="/forgot-password" element={<ForgotPasswordPage />} />
         <Route path="/auth/google/callback" element={<GoogleCallbackPage />} />
         <Route path="/sell" element={<SellerRegisterPage />} />
         <Route path="/stores/:slug" element={<StorefrontPage />} />
