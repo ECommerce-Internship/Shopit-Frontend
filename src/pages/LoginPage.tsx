@@ -121,6 +121,13 @@ function LoginPage() {
               {passwordError}
             </p>
           )}
+          <Link
+            to="/forgot-password"
+            className="text-[11px] underline self-end mt-1"
+            style={{ fontFamily: "'Inter', sans-serif", color: '#2F6F4F' }}
+          >
+            Forgot password?
+          </Link>
         </div>
         
         <button
