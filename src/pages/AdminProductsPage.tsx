@@ -3,6 +3,9 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { AdminTabs } from '../components/AdminTabs';
 import { SkeletonTableRow } from '../components/Skeleton';
 import { Loader2 } from 'lucide-react';
+import { GenerateContentDrawer } from '../components/GenerateContentDrawer';
+import { generateProductContent } from '../api/aiApi';
+import type { ProductContentResponse } from '../api/aiApi';
 import toast from 'react-hot-toast';
 import {
   createProduct,
@@ -10,7 +13,6 @@ import {
   deleteProductImage,
   fetchAdminProducts,
   fetchCategories,
-  generateProductContent,
   importProducts,
   importProductsFromSftp,
   updateProduct,
@@ -63,6 +65,7 @@ type FormState = {
   initialStock: string;
   stockQuantity: string;
   description: string;
+  specs: string;
 };
 
 const emptyForm: FormState = {
@@ -74,6 +77,7 @@ const emptyForm: FormState = {
   initialStock: '',
   stockQuantity: '',
   description: '',
+  specs: '',
 };
 
 function StockBadge({ quantity }: { quantity: number }) {
@@ -129,6 +133,7 @@ function AdminProductsPage() {
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [hasStoredImage, setHasStoredImage] = useState(false);
   const [generated, setGenerated] = useState<ProductContent | null>(null);
+  const [drawerOpen, setDrawerOpen] = useState(false);
 
   // ── delete + import modal state ──
   const [deleteTarget, setDeleteTarget] = useState<Product | null>(null);
@@ -169,6 +174,7 @@ function AdminProductsPage() {
     setImagePreview(null);
     setHasStoredImage(false);
     setGenerated(null);
+    setDrawerOpen(false);
   };
 
   const openAdd = () => {
@@ -192,6 +198,7 @@ function AdminProductsPage() {
       initialStock: '',
       stockQuantity: String(p.stockQuantity),
       description: p.description ?? '',
+      specs: '',
     });
     setHasStoredImage(!!p.imageUrl);
     setEditOpen(true);
@@ -257,28 +264,36 @@ function AdminProductsPage() {
     }
   };
 
-  // ── AI content generation (edit mode only — needs a persisted product id) ──
-  const generateMutation = useMutation({
-    mutationFn: (id: number) => generateProductContent(id),
-    onSuccess: (content) => {
-      setGenerated(content);
-      setForm((f) => ({ ...f, description: f.description.trim() ? f.description : content.description }));
-    },
-    onError: (err: unknown) => {
-      const status = (err as { response?: { status?: number } })?.response?.status;
-      toast.error(
-        status === 429
-          ? 'Too many requests — try again in a moment.'
-          : 'Could not generate content.'
-      );
-    },
-  });
+const generateMutation = useMutation({
+  mutationFn: () => {
+    const categoryName = categories.find(c => c.id === form.categoryId)?.name ?? '';
+    return generateProductContent({
+      productName: form.name,
+      category: categoryName,
+      specs: form.specs,
+    });
+  },
+  onSuccess: (content) => {
+    setGenerated(content);
+    setDrawerOpen(true);
+  },
+  onError: (err: unknown) => {
+    const status = (err as { response?: { status?: number } })?.response?.status;
+    toast.error(
+      status === 429
+        ? 'Too many requests — try again in a moment.'
+        : 'Could not generate content.'
+    );
+  },
+});
 
-  const addFeature = (text: string) =>
-    setForm((f) => ({
-      ...f,
-      description: (f.description ? f.description.replace(/\s*$/, '') + '\n' : '') + '• ' + text,
-    }));
+const handleUseContent = (content: ProductContentResponse) => {
+  setForm((f) => ({
+    ...f,
+    description: content.description,
+  }));
+  setDrawerOpen(false);
+};
 
   // ── save (create/update, then upload the image if one was picked) ──
   const saveMutation = useMutation({
@@ -525,7 +540,7 @@ function AdminProductsPage() {
         </div>
       </div>
 
-      {/* Create / Edit modal */}
+   {/* Create / Edit modal */}
       {editOpen && (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(31,42,36,0.42)', backdropFilter: 'blur(2px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '32px', zIndex: 50 }}>
           <div style={{ width: '600px', maxWidth: '100%', maxHeight: '88vh', overflowY: 'auto', background: '#fff', border: '1px solid #E4DCC9', borderRadius: '20px', boxShadow: '0 24px 60px rgba(31,42,36,0.20)', padding: '28px' }}>
@@ -592,48 +607,49 @@ function AdminProductsPage() {
               </div>
             )}
 
-            <div style={{ marginBottom: '16px' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '7px' }}>
-                <div style={labelMono}>Description</div>
-                {editMode === 'edit' && (
-                  generateMutation.isPending ? (
-                    <button disabled style={{ display: 'flex', alignItems: 'center', gap: '7px', fontFamily: "'Inter', sans-serif", fontSize: '12px', fontWeight: 500, color: '#8A8273', background: '#fff', border: '1px solid #E4DCC9', borderRadius: '8px', padding: '5px 11px', cursor: 'wait' }}>
-                      <Loader2 size={11} className="animate-spin" color="#2F6F4F" />
-                      Generating…
-                    </button>
-                  ) : (
-                    <button onClick={() => editId != null && generateMutation.mutate(editId)} style={{ fontFamily: "'Inter', sans-serif", fontSize: '12px', fontWeight: 500, color: '#2F6F4F', background: '#fff', border: '1px solid #2F6F4F', borderRadius: '8px', padding: '5px 11px', cursor: 'pointer' }}>✨ Generate Content</button>
-                  )
-                )}
+            {/* ── Generate Content section ── */}
+            <div style={{ marginBottom: '16px', padding: '16px', borderRadius: '14px', background: '#FAF7FF', border: '1px solid #D9CCF0' }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '10px' }}>
+                <div style={{ ...labelMono, color: '#7B5EA7' }}>✨ AI Content Generation</div>
               </div>
-              <textarea rows={4} value={form.description} onChange={(e) => updateField('description', e.target.value)} placeholder="Describe the product…" style={{ ...inputStyle, lineHeight: 1.5, resize: 'vertical' }} />
-              {editMode === 'create' && (
-                <div style={{ fontSize: '11.5px', color: '#C2BBAA', marginTop: '6px' }}>AI content suggestions are available after the product is saved.</div>
+
+              <div style={{ marginBottom: '10px' }}>
+                <div style={{ ...fieldLabel, color: '#7B5EA7' }}>Key Specs</div>
+                <textarea
+                  rows={2}
+                  value={form.specs}
+                  onChange={(e) => updateField('specs', e.target.value)}
+                  placeholder="Enter comma-separated key features e.g. 4K display, 15-hour battery, USB-C"
+                  style={{ ...inputStyle, lineHeight: 1.5, resize: 'vertical', background: '#fff', borderColor: '#D9CCF0' }}
+                />
+              </div>
+
+              {generateMutation.isPending ? (
+                <button disabled style={{ display: 'flex', alignItems: 'center', gap: '7px', fontFamily: "'Inter', sans-serif", fontSize: '13px', fontWeight: 500, color: '#8A8273', background: '#fff', border: '1px solid #D9CCF0', borderRadius: '10px', padding: '9px 16px', cursor: 'wait', width: '100%', justifyContent: 'center' }}>
+                  <Loader2 size={13} className="animate-spin" color="#7B5EA7" />
+                  Generating with AI...
+                </button>
+              ) : (
+                <button
+                onClick={() => generateMutation.mutate()}
+                  disabled={!form.name.trim()}
+                  style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '7px', fontFamily: "'Inter', sans-serif", fontSize: '13px', fontWeight: 600, color: '#FFFFFF', background: form.name.trim() ? '#7B5EA7' : '#C2BBAA', border: 'none', borderRadius: '10px', padding: '9px 16px', cursor: form.name.trim() ? 'pointer' : 'not-allowed', width: '100%' }}
+                >
+                  ✨ Generate Content
+                </button>
+              )}
+              {!form.name.trim() && (
+                <div style={{ fontSize: '11.5px', color: '#9A85C7', marginTop: '6px', textAlign: 'center' }}>Enter a product name to enable AI generation.</div>
               )}
             </div>
 
-            {generated && (
-              <div style={{ background: '#F7FAF8', border: '1px solid #cfe2d5', borderRadius: '14px', padding: '16px', marginBottom: '16px' }}>
-                <div style={{ ...labelMono, color: '#2F6F4F', marginBottom: '12px' }}>✨ Suggested by AI</div>
-                <div style={{ marginBottom: '11px' }}>
-                  <div style={{ ...labelMono, fontSize: '9.5px', letterSpacing: '0.08em', marginBottom: '3px' }}>SEO Title</div>
-                  <div style={{ fontSize: '13.5px', color: '#1F2A24' }}>{generated.seoTitle}</div>
-                </div>
-                <div style={{ marginBottom: '13px' }}>
-                  <div style={{ ...labelMono, fontSize: '9.5px', letterSpacing: '0.08em', marginBottom: '3px' }}>Meta Description</div>
-                  <div style={{ fontSize: '13px', lineHeight: 1.5, color: '#5c5648' }}>{generated.metaDescription}</div>
-                </div>
-                <div style={{ ...labelMono, fontSize: '9.5px', letterSpacing: '0.08em', marginBottom: '7px' }}>Feature Bullets — click to add</div>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                  {generated.features.map((feat, i) => (
-                    <button key={i} onClick={() => addFeature(feat)} style={{ display: 'flex', alignItems: 'center', gap: '9px', textAlign: 'left', fontFamily: "'Inter', sans-serif", fontSize: '13px', color: '#1F2A24', background: '#fff', border: '1px solid #E4DCC9', borderRadius: '10px', padding: '8px 11px', cursor: 'pointer' }}>
-                      <span style={{ color: '#2F6F4F', fontWeight: 600 }}>+</span>{feat}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            )}
+            {/* Description */}
+            <div style={{ marginBottom: '16px' }}>
+              <div style={fieldLabel}>Description</div>
+              <textarea rows={4} value={form.description} onChange={(e) => updateField('description', e.target.value)} placeholder="Describe the product…" style={{ ...inputStyle, lineHeight: 1.5, resize: 'vertical' }} />
+            </div>
 
+            {/* Product Image */}
             <div style={{ marginBottom: '22px' }}>
               <div style={fieldLabel}>Product Image</div>
               {imagePreview ? (
@@ -671,6 +687,16 @@ function AdminProductsPage() {
           </div>
         </div>
       )}
+
+      {/* AI Content Drawer */}
+      <GenerateContentDrawer
+        open={drawerOpen}
+        generated={generated}
+        isRegenerating={generateMutation.isPending}
+        onClose={() => setDrawerOpen(false)}
+        onUseContent={handleUseContent}
+        onRegenerate={() => generateMutation.mutate()}
+      />
 
       {/* Delete confirmation */}
       {deleteTarget && (
