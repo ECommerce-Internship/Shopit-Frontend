@@ -26,6 +26,31 @@ export type TopProduct = {
   unitsSold: number;
   revenue: number;
 };
+export type SellerDashboardSummary = {
+  grossSales: number;
+  totalCommission: number;
+  netEarnings: number;
+  totalOrders: number;
+  lowStockCount: number;
+  todaysNewOrders: number;
+};
+
+export async function fetchSellerSummary(): Promise<SellerDashboardSummary> {
+  const response = await axiosInstance.get<SellerDashboardSummary>('/api/v1/seller/dashboard/summary');
+  return response.data;
+}
+
+export async function fetchSellerRevenue(period: 'day' | 'week' | 'monthly' = 'day'): Promise<RevenuePoint[]> {
+  const response = await axiosInstance.get<RevenuePoint[]>('/api/v1/seller/dashboard/revenue', {
+    params: { period },
+  });
+  return response.data;
+}
+
+export async function fetchSellerTopProducts(): Promise<TopProduct[]> {
+  const response = await axiosInstance.get<TopProduct[]>('/api/v1/seller/dashboard/top-products');
+  return response.data;
+}
 
 export async function fetchDashboardSummary(): Promise<DashboardSummary> {
   const response = await axiosInstance.get<DashboardSummary>('/api/v1/admin/dashboard/summary');

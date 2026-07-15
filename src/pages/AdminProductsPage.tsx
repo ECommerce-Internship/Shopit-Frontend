@@ -3,6 +3,9 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { AdminTabs } from '../components/AdminTabs';
 import { SkeletonTableRow } from '../components/Skeleton';
 import { Loader2 } from 'lucide-react';
+import { GenerateContentDrawer } from '../components/GenerateContentDrawer';
+import { generateProductContent } from '../api/aiApi';
+import type { ProductContentResponse } from '../api/aiApi';
 import toast from 'react-hot-toast';
 import {
   createProduct,
@@ -10,7 +13,6 @@ import {
   deleteProductImage,
   fetchAdminProducts,
   fetchCategories,
-  generateProductContent,
   importProducts,
   importProductsFromSftp,
   updateProduct,
@@ -135,6 +137,7 @@ function AdminProductsPage() {
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [hasStoredImage, setHasStoredImage] = useState(false);
   const [generated, setGenerated] = useState<ProductContent | null>(null);
+  const [drawerOpen, setDrawerOpen] = useState(false);
 
   // â”€â”€ delete + import modal state â”€â”€
   const [deleteTarget, setDeleteTarget] = useState<Product | null>(null);
@@ -175,6 +178,7 @@ function AdminProductsPage() {
     setImagePreview(null);
     setHasStoredImage(false);
     setGenerated(null);
+    setDrawerOpen(false);
   };
 
   const openAdd = () => {
@@ -537,7 +541,7 @@ function AdminProductsPage() {
         </div>
       </div>
 
-      {/* Create / Edit modal */}
+   {/* Create / Edit modal */}
       {editOpen && (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(31,42,36,0.42)', backdropFilter: 'blur(2px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '32px', zIndex: 50 }}>
           <div style={{ width: '600px', maxWidth: '100%', maxHeight: '88vh', overflowY: 'auto', background: '#fff', border: '1px solid #E4DCC9', borderRadius: '20px', boxShadow: '0 24px 60px rgba(31,42,36,0.20)', padding: '28px' }}>
@@ -646,6 +650,7 @@ function AdminProductsPage() {
               </div>
             )}
 
+            {/* Product Image */}
             <div style={{ marginBottom: '22px' }}>
               <div style={fieldLabel}>Product Image</div>
               {imagePreview ? (
@@ -683,6 +688,16 @@ function AdminProductsPage() {
           </div>
         </div>
       )}
+
+      {/* AI Content Drawer */}
+      <GenerateContentDrawer
+        open={drawerOpen}
+        generated={generated}
+        isRegenerating={generateMutation.isPending}
+        onClose={() => setDrawerOpen(false)}
+        onUseContent={handleUseContent}
+        onRegenerate={() => generateMutation.mutate()}
+      />
 
       {/* Delete confirmation */}
       {deleteTarget && (
