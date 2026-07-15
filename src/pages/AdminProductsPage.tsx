@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+﻿import { useEffect, useMemo, useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { AdminTabs } from '../components/AdminTabs';
 import { SkeletonTableRow } from '../components/Skeleton';
@@ -63,6 +63,9 @@ type FormState = {
   initialStock: string;
   stockQuantity: string;
   description: string;
+  seoTitle: string;
+  metaDescription: string;
+  features: string[];
 };
 
 const emptyForm: FormState = {
@@ -74,6 +77,9 @@ const emptyForm: FormState = {
   initialStock: '',
   stockQuantity: '',
   description: '',
+  seoTitle: '',
+  metaDescription: '',
+  features: [],
 };
 
 function StockBadge({ quantity }: { quantity: number }) {
@@ -104,7 +110,7 @@ function StockBadge({ quantity }: { quantity: number }) {
 function AdminProductsPage() {
   const queryClient = useQueryClient();
 
-  // ── list state ──
+  // â”€â”€ list state â”€â”€
   const [searchInput, setSearchInput] = useState('');
   const [search, setSearch] = useState('');
   const [sortBy, setSortBy] = useState<AdminSortBy>('name');
@@ -120,7 +126,7 @@ function AdminProductsPage() {
     return () => clearTimeout(id);
   }, [searchInput]);
 
-  // ── edit / create modal state ──
+  // â”€â”€ edit / create modal state â”€â”€
   const [editOpen, setEditOpen] = useState(false);
   const [editMode, setEditMode] = useState<'create' | 'edit'>('create');
   const [editId, setEditId] = useState<number | null>(null);
@@ -130,7 +136,7 @@ function AdminProductsPage() {
   const [hasStoredImage, setHasStoredImage] = useState(false);
   const [generated, setGenerated] = useState<ProductContent | null>(null);
 
-  // ── delete + import modal state ──
+  // â”€â”€ delete + import modal state â”€â”€
   const [deleteTarget, setDeleteTarget] = useState<Product | null>(null);
   const [importOpen, setImportOpen] = useState(false);
   const [importState, setImportState] = useState<'select' | 'uploading' | 'result'>('select');
@@ -192,6 +198,9 @@ function AdminProductsPage() {
       initialStock: '',
       stockQuantity: String(p.stockQuantity),
       description: p.description ?? '',
+      seoTitle: p.seoTitle ?? '',
+      metaDescription: p.metaDescription ?? '',
+      features: p.features ?? [],
     });
     setHasStoredImage(!!p.imageUrl);
     setEditOpen(true);
@@ -205,7 +214,7 @@ function AdminProductsPage() {
   const updateField = <K extends keyof FormState>(field: K, value: FormState[K]) =>
     setForm((f) => ({ ...f, [field]: value }));
 
-  // ── sorting ──
+  // â”€â”€ sorting â”€â”€
   const toggleSort = (field: AdminSortBy) => {
     if (sortBy === field) {
       setSortOrder((o) => (o === 'asc' ? 'desc' : 'asc'));
@@ -215,9 +224,9 @@ function AdminProductsPage() {
     }
     setPage(1);
   };
-  const arrow = (field: AdminSortBy) => (sortBy === field ? (sortOrder === 'asc' ? ' ▲' : ' ▼') : '');
+  const arrow = (field: AdminSortBy) => (sortBy === field ? (sortOrder === 'asc' ? ' â–²' : ' â–¼') : '');
 
-  // ── image selection (client preview only; upload is a second call on save) ──
+  // â”€â”€ image selection (client preview only; upload is a second call on save) â”€â”€
   const acceptFile = (file: File | null | undefined) => {
     if (!file) return;
     if (!/image\/(jpeg|png)/.test(file.type)) {
@@ -245,19 +254,19 @@ function AdminProductsPage() {
 
   const removeImage = () => {
     if (imagePreview) {
-      // A freshly picked (not-yet-uploaded) image — just drop it locally.
+      // A freshly picked (not-yet-uploaded) image â€” just drop it locally.
       revokePreview();
       setImageFile(null);
       setImagePreview(null);
       return;
     }
-    // An already-stored image — remove it server-side.
+    // An already-stored image â€” remove it server-side.
     if (hasStoredImage && editId != null) {
       deleteImageMutation.mutate(editId);
     }
   };
 
-  // ── AI content generation (edit mode only — needs a persisted product id) ──
+  // â”€â”€ AI content generation (edit mode only â€” needs a persisted product id) â”€â”€
   const generateMutation = useMutation({
     mutationFn: (id: number) => generateProductContent(id),
     onSuccess: (content) => {
@@ -268,7 +277,7 @@ function AdminProductsPage() {
       const status = (err as { response?: { status?: number } })?.response?.status;
       toast.error(
         status === 429
-          ? 'Too many requests — try again in a moment.'
+          ? 'Too many requests â€” try again in a moment.'
           : 'Could not generate content.'
       );
     },
@@ -277,10 +286,10 @@ function AdminProductsPage() {
   const addFeature = (text: string) =>
     setForm((f) => ({
       ...f,
-      description: (f.description ? f.description.replace(/\s*$/, '') + '\n' : '') + '• ' + text,
+      features: f.features.includes(text) ? f.features : [...f.features, text],
     }));
 
-  // ── save (create/update, then upload the image if one was picked) ──
+  // â”€â”€ save (create/update, then upload the image if one was picked) â”€â”€
   const saveMutation = useMutation({
     mutationFn: async () => {
       const price = parseFloat(form.price) || 0;
@@ -307,6 +316,9 @@ function AdminProductsPage() {
           price,
           sku: form.sku.trim(),
           imageUrl,
+          seoTitle: form.seoTitle.trim() || null,
+          metaDescription: form.metaDescription.trim() || null,
+          features: form.features.length > 0 ? form.features : null,
           categoryId,
           stockQuantity: parseInt(form.stockQuantity, 10) || 0,
         });
@@ -341,7 +353,7 @@ function AdminProductsPage() {
     saveMutation.mutate();
   };
 
-  // ── delete ──
+  // â”€â”€ delete â”€â”€
   const deleteMutation = useMutation({
     mutationFn: (id: number) => deleteProduct(id),
     onSuccess: () => {
@@ -352,7 +364,7 @@ function AdminProductsPage() {
     onError: () => toast.error('Could not delete the product.'),
   });
 
-  // ── import ──
+  // â”€â”€ import â”€â”€
   const importMutation = useMutation({
     mutationFn: (file: File) => importProducts(file),
     onSuccess: (result) => {
@@ -366,7 +378,7 @@ function AdminProductsPage() {
     },
   });
 
-  // ── SFTP import (one-click trigger; server pulls the file itself) ──
+  // â”€â”€ SFTP import (one-click trigger; server pulls the file itself) â”€â”€
   const sftpImportMutation = useMutation({
     mutationFn: () => importProductsFromSftp(),
     onSuccess: (result) => {
@@ -446,7 +458,7 @@ function AdminProductsPage() {
               style={{ display: 'flex', alignItems: 'center', gap: '7px', fontFamily: "'Inter', sans-serif", fontSize: '13px', fontWeight: 500, color: '#1F2A24', background: '#fff', border: '1px solid #E4DCC9', borderRadius: '11px', padding: '11px 16px', cursor: sftpImportMutation.isPending ? 'wait' : 'pointer', opacity: sftpImportMutation.isPending ? 0.7 : 1, whiteSpace: 'nowrap' }}
             >
               {sftpImportMutation.isPending && <Loader2 size={12} className="animate-spin" color="#2F6F4F" />}
-              {sftpImportMutation.isPending ? 'Importing…' : 'Import via SFTP'}
+              {sftpImportMutation.isPending ? 'Importingâ€¦' : 'Import via SFTP'}
             </button>
             <button onClick={openAdd} style={{ fontFamily: "'Inter', sans-serif", fontSize: '13px', fontWeight: 600, color: '#fff', background: '#1F2A24', border: '1px solid #1F2A24', borderRadius: '11px', padding: '11px 18px', cursor: 'pointer', whiteSpace: 'nowrap' }}>+ Add Product</button>
           </div>
@@ -462,7 +474,7 @@ function AdminProductsPage() {
             type="text"
             value={searchInput}
             onChange={(e) => setSearchInput(e.target.value)}
-            placeholder="Search products by name or SKU…"
+            placeholder="Search products by name or SKUâ€¦"
             style={{ ...inputStyle, padding: '13px 16px 13px 42px' }}
           />
         </div>
@@ -542,9 +554,9 @@ function AdminProductsPage() {
                   onChange={(e) => updateField('storeId', e.target.value === '' ? '' : Number(e.target.value))}
                   style={{ ...inputStyle, cursor: 'pointer' }}
                 >
-                  <option value="" disabled>Select a store…</option>
+                  <option value="" disabled>Select a storeâ€¦</option>
                   {stores.map((s) => (
-                    <option key={s.id} value={s.id}>{s.name} — {s.ownerName}</option>
+                    <option key={s.id} value={s.id}>{s.name} â€” {s.ownerName}</option>
                   ))}
                 </select>
               </div>
@@ -572,7 +584,7 @@ function AdminProductsPage() {
               <div>
                 <div style={fieldLabel}>Category *</div>
                 <select value={form.categoryId} onChange={(e) => updateField('categoryId', Number(e.target.value))} style={{ ...inputStyle, cursor: 'pointer' }}>
-                  <option value="" disabled>Select a category…</option>
+                  <option value="" disabled>Select a categoryâ€¦</option>
                   {categories.map((cat) => (
                     <option key={cat.id} value={cat.id}>{cat.name}</option>
                   ))}
@@ -599,14 +611,14 @@ function AdminProductsPage() {
                   generateMutation.isPending ? (
                     <button disabled style={{ display: 'flex', alignItems: 'center', gap: '7px', fontFamily: "'Inter', sans-serif", fontSize: '12px', fontWeight: 500, color: '#8A8273', background: '#fff', border: '1px solid #E4DCC9', borderRadius: '8px', padding: '5px 11px', cursor: 'wait' }}>
                       <Loader2 size={11} className="animate-spin" color="#2F6F4F" />
-                      Generating…
+                      Generatingâ€¦
                     </button>
                   ) : (
-                    <button onClick={() => editId != null && generateMutation.mutate(editId)} style={{ fontFamily: "'Inter', sans-serif", fontSize: '12px', fontWeight: 500, color: '#2F6F4F', background: '#fff', border: '1px solid #2F6F4F', borderRadius: '8px', padding: '5px 11px', cursor: 'pointer' }}>✨ Generate Content</button>
+                    <button onClick={() => editId != null && generateMutation.mutate(editId)} style={{ fontFamily: "'Inter', sans-serif", fontSize: '12px', fontWeight: 500, color: '#2F6F4F', background: '#fff', border: '1px solid #2F6F4F', borderRadius: '8px', padding: '5px 11px', cursor: 'pointer' }}>âœ¨ Generate Content</button>
                   )
                 )}
               </div>
-              <textarea rows={4} value={form.description} onChange={(e) => updateField('description', e.target.value)} placeholder="Describe the product…" style={{ ...inputStyle, lineHeight: 1.5, resize: 'vertical' }} />
+              <textarea rows={4} value={form.description} onChange={(e) => updateField('description', e.target.value)} placeholder="Describe the productâ€¦" style={{ ...inputStyle, lineHeight: 1.5, resize: 'vertical' }} />
               {editMode === 'create' && (
                 <div style={{ fontSize: '11.5px', color: '#C2BBAA', marginTop: '6px' }}>AI content suggestions are available after the product is saved.</div>
               )}
@@ -614,7 +626,7 @@ function AdminProductsPage() {
 
             {generated && (
               <div style={{ background: '#F7FAF8', border: '1px solid #cfe2d5', borderRadius: '14px', padding: '16px', marginBottom: '16px' }}>
-                <div style={{ ...labelMono, color: '#2F6F4F', marginBottom: '12px' }}>✨ Suggested by AI</div>
+                <div style={{ ...labelMono, color: '#2F6F4F', marginBottom: '12px' }}>âœ¨ Suggested by AI</div>
                 <div style={{ marginBottom: '11px' }}>
                   <div style={{ ...labelMono, fontSize: '9.5px', letterSpacing: '0.08em', marginBottom: '3px' }}>SEO Title</div>
                   <div style={{ fontSize: '13.5px', color: '#1F2A24' }}>{generated.seoTitle}</div>
@@ -623,7 +635,7 @@ function AdminProductsPage() {
                   <div style={{ ...labelMono, fontSize: '9.5px', letterSpacing: '0.08em', marginBottom: '3px' }}>Meta Description</div>
                   <div style={{ fontSize: '13px', lineHeight: 1.5, color: '#5c5648' }}>{generated.metaDescription}</div>
                 </div>
-                <div style={{ ...labelMono, fontSize: '9.5px', letterSpacing: '0.08em', marginBottom: '7px' }}>Feature Bullets — click to add</div>
+                <div style={{ ...labelMono, fontSize: '9.5px', letterSpacing: '0.08em', marginBottom: '7px' }}>Feature Bullets â€” click to add</div>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
                   {generated.features.map((feat, i) => (
                     <button key={i} onClick={() => addFeature(feat)} style={{ display: 'flex', alignItems: 'center', gap: '9px', textAlign: 'left', fontFamily: "'Inter', sans-serif", fontSize: '13px', color: '#1F2A24', background: '#fff', border: '1px solid #E4DCC9', borderRadius: '10px', padding: '8px 11px', cursor: 'pointer' }}>
@@ -655,7 +667,7 @@ function AdminProductsPage() {
                   style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '6px', border: '1.5px dashed #E4DCC9', borderRadius: '12px', padding: '26px', cursor: 'pointer', textAlign: 'center' }}
                 >
                   <div style={{ fontSize: '13.5px', color: '#5c5648' }}>Drag &amp; drop an image, or <span style={{ color: '#2F6F4F', fontWeight: 500 }}>browse</span></div>
-                  <div style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: '10.5px', color: '#C2BBAA' }}>JPG or PNG · max 5MB</div>
+                  <div style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: '10.5px', color: '#C2BBAA' }}>JPG or PNG Â· max 5MB</div>
                   <input type="file" accept="image/jpeg,image/png" onChange={(e) => acceptFile(e.target.files?.[0])} style={{ display: 'none' }} />
                 </label>
               )}
@@ -665,7 +677,7 @@ function AdminProductsPage() {
               <button onClick={closeEdit} disabled={saveMutation.isPending} style={{ fontFamily: "'Inter', sans-serif", fontSize: '13px', fontWeight: 500, color: '#1F2A24', background: '#fff', border: '1px solid #E4DCC9', borderRadius: '11px', padding: '11px 18px', cursor: 'pointer' }}>Cancel</button>
               <button onClick={handleSave} disabled={saveMutation.isPending} style={{ display: 'flex', alignItems: 'center', gap: '8px', fontFamily: "'Inter', sans-serif", fontSize: '13px', fontWeight: 600, color: '#fff', background: '#1F2A24', opacity: saveMutation.isPending ? 0.7 : 1, border: '1px solid #1F2A24', borderRadius: '11px', padding: '11px 20px', cursor: saveMutation.isPending ? 'wait' : 'pointer' }}>
                 {saveMutation.isPending && <Loader2 size={12} className="animate-spin" />}
-                {saveMutation.isPending ? 'Saving…' : 'Save Product'}
+                {saveMutation.isPending ? 'Savingâ€¦' : 'Save Product'}
               </button>
             </div>
           </div>
@@ -676,7 +688,7 @@ function AdminProductsPage() {
       {deleteTarget && (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(31,42,36,0.42)', backdropFilter: 'blur(2px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '32px', zIndex: 50 }}>
           <div style={{ width: '400px', maxWidth: '100%', background: '#fff', border: '1px solid #E4DCC9', borderRadius: '20px', boxShadow: '0 24px 60px rgba(31,42,36,0.20)', padding: '28px', textAlign: 'center' }}>
-            <div style={{ width: '54px', height: '54px', borderRadius: '50%', background: '#FBEEE8', border: '1px solid #e9c8b8', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '22px', margin: '0 auto 16px' }}>🗑</div>
+            <div style={{ width: '54px', height: '54px', borderRadius: '50%', background: '#FBEEE8', border: '1px solid #e9c8b8', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '22px', margin: '0 auto 16px' }}>ðŸ—‘</div>
             <div style={{ ...labelMono, marginBottom: '7px' }}>Delete Product</div>
             <h2 style={{ fontFamily: "'Fraunces', serif", fontWeight: 600, fontSize: '22px', margin: '0 0 10px', color: '#1F2A24' }}>Delete this product?</h2>
             <p style={{ fontSize: '14px', lineHeight: 1.5, color: '#5c5648', margin: '0 0 22px' }}>
@@ -703,7 +715,7 @@ function AdminProductsPage() {
             {importState === 'select' && (
               <label style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '8px', border: '1.5px dashed #E4DCC9', borderRadius: '14px', padding: '38px 20px', cursor: 'pointer', textAlign: 'center', marginBottom: '20px' }}>
                 <div style={{ fontSize: '15px', fontWeight: 500, color: '#1F2A24' }}>Select a .xlsx file</div>
-                <div style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: '10.5px', color: '#C2BBAA' }}>Excel spreadsheet · max 10MB</div>
+                <div style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: '10.5px', color: '#C2BBAA' }}>Excel spreadsheet Â· max 10MB</div>
                 <input type="file" accept=".xlsx" onChange={onImportFile} style={{ display: 'none' }} />
               </label>
             )}
@@ -711,7 +723,7 @@ function AdminProductsPage() {
             {importState === 'uploading' && (
               <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '14px', padding: '44px 0', marginBottom: '20px' }}>
                 <Loader2 size={30} className="animate-spin" color="#2F6F4F" />
-                <div style={{ fontSize: '13.5px', color: '#8A8273' }}>Uploading &amp; processing…</div>
+                <div style={{ fontSize: '13.5px', color: '#8A8273' }}>Uploading &amp; processingâ€¦</div>
               </div>
             )}
 
@@ -732,7 +744,7 @@ function AdminProductsPage() {
                   <div style={{ border: '1px solid #E4DCC9', borderRadius: '12px', overflow: 'hidden', marginBottom: '20px' }}>
                     <button onClick={() => setErrorsExpanded((v) => !v)} style={{ width: '100%', display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontFamily: "'Inter', sans-serif", fontSize: '13px', fontWeight: 500, color: '#1F2A24', background: '#FBF7F0', border: 'none', padding: '12px 15px', cursor: 'pointer' }}>
                       View error details
-                      <span style={{ fontFamily: "'IBM Plex Mono', monospace", color: '#8A8273' }}>{errorsExpanded ? '−' : '+'}</span>
+                      <span style={{ fontFamily: "'IBM Plex Mono', monospace", color: '#8A8273' }}>{errorsExpanded ? 'âˆ’' : '+'}</span>
                     </button>
                     {errorsExpanded && (
                       <div>
