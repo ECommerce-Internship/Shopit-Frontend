@@ -1,4 +1,4 @@
-export type Product = {
+﻿export type Product = {
   id: number;
   name: string;
   description: string | null;
@@ -14,6 +14,9 @@ export type Product = {
   storeId: number;
   storeName: string;
   storeSlug: string;
+  features?: string[] | null;
+  seoTitle?: string | null;
+  metaDescription?: string | null;
 };
 
 export type Category = {
@@ -23,6 +26,16 @@ export type Category = {
   parentCategoryId: number | null;
   subcategoryCount: number;
   subcategories: Category[];
+};
+
+export type CreateCategoryRequest = {
+  name: string;
+  parentCategoryId: number | null;
+};
+
+export type UpdateCategoryRequest = {
+  name: string;
+  parentCategoryId: number | null;
 };
 
 export type SortBy = 'name' | 'price' | 'createdAt';
@@ -47,4 +60,58 @@ export type PaginatedProducts = {
   totalPages: number;
   hasNext: boolean;
   hasPrevious: boolean;
+};
+
+// Backend only sorts by these fields (ProductService throws on anything else).
+export type AdminSortBy = 'name' | 'price';
+
+export type AdminProductQuery = {
+  page: number;
+  pageSize?: number;
+  search?: string;
+  categoryId?: number | null;
+  sortBy: AdminSortBy;
+  sortOrder: SortOrder;
+};
+
+export type CreateProductRequest = {
+  name: string;
+  description: string | null;
+  price: number;
+  sku: string;
+  imageUrl?: string | null;
+  categoryId: number;
+  storeId: number;
+  initialStock: number;
+};
+
+export type UpdateProductRequest = {
+  name: string;
+  description: string | null;
+  price: number;
+  sku: string;
+  imageUrl?: string | null;
+  seoTitle?: string | null;
+  metaDescription?: string | null;
+  features?: string[] | null;
+  categoryId: number;
+  stockQuantity: number;
+};
+
+export type ImportError = {
+  row: number;
+  reason: string;
+};
+
+export type ImportResult = {
+  addedCount: number;
+  failedCount: number;
+  errors: ImportError[];
+};
+
+export type ProductContent = {
+  description: string;
+  features: string[];
+  seoTitle: string;
+  metaDescription: string;
 };

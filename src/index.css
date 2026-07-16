@@ -1,1 +1,63 @@
 @import "tailwindcss";
+
+/* --- Admin panel motion --------------------------------------------------- */
+/* Smooth entrance used when an admin "manageables" page mounts and when the
+   Overview section cards list in (staggered via inline animation-delay). */
+@keyframes adminFadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes adminMenuIn {
+  from {
+    opacity: 0;
+    transform: translateY(-6px) scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* Whole-page fade/slide when transitioning between admin pages. */
+.admin-enter {
+  animation: adminFadeInUp 0.4s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+/* Each card starts hidden and eases in; delay is set inline for the stagger. */
+.admin-card-enter {
+  animation: adminFadeInUp 0.45s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+/* Cards/tabs settle smoothly on hover and while active. */
+.admin-card-enter {
+  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+}
+.admin-card-enter:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 10px 24px rgba(31, 42, 36, 0.08);
+  border-color: #d9cdb4;
+}
+
+.admin-menu-enter {
+  animation: adminMenuIn 0.16s ease-out both;
+  transform-origin: top right;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .admin-enter,
+  .admin-card-enter,
+  .admin-menu-enter {
+    animation: none;
+  }
+  .admin-card-enter:hover {
+    transform: none;
+  }
+}
+/* -------------------------------------------------------------------------- */

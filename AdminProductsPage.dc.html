@@ -1,0 +1,544 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  *{box-sizing:border-box}
+  body{margin:0;background:#FBF7F0}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  input:focus,textarea:focus,select:focus{outline:none;border-color:#2F6F4F !important}
+  input::placeholder,textarea::placeholder{color:#C2BBAA}
+</style>
+</helmet>
+<div style="min-height:100vh;background:#FBF7F0;font-family:'Inter',sans-serif;color:#1F2A24;padding:40px">
+  <div style="max-width:1080px;margin:0 auto">
+
+    <div style="display:flex;justify-content:space-between;align-items:flex-end;gap:24px;margin-bottom:26px">
+      <div>
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:0.1em;text-transform:uppercase;color:#8A8273;margin-bottom:9px">Shopit Admin</div>
+        <h1 style="font-family:'Fraunces',serif;font-weight:600;font-size:34px;margin:0;line-height:1;color:#1F2A24">Products</h1>
+      </div>
+      <div style="display:flex;gap:10px;flex:none">
+        <button onClick="{{ openImport }}" style="font-family:'Inter',sans-serif;font-size:13px;font-weight:500;color:#1F2A24;background:#fff;border:1px solid #E4DCC9;border-radius:11px;padding:11px 16px;cursor:pointer;white-space:nowrap" style-hover="background:#FBF7F0">Import Excel</button>
+        <button onClick="{{ openAdd }}" style="font-family:'Inter',sans-serif;font-size:13px;font-weight:600;color:#fff;background:#1F2A24;border:1px solid #1F2A24;border-radius:11px;padding:11px 18px;cursor:pointer;white-space:nowrap" style-hover="background:#2b382f">+ Add Product</button>
+      </div>
+    </div>
+
+    <div style="display:flex;gap:26px;border-bottom:1px solid #E4DCC9;margin-bottom:24px">
+      <div style="font-size:13.5px;color:#8A8273;padding-bottom:13px;cursor:pointer">Orders</div>
+      <div style="font-size:13.5px;color:#8A8273;padding-bottom:13px;cursor:pointer">Payments</div>
+      <div style="font-size:13.5px;color:#8A8273;padding-bottom:13px;cursor:pointer">Reviews</div>
+      <div style="font-size:13.5px;font-weight:600;color:#1F2A24;padding-bottom:13px;border-bottom:2px solid #2F6F4F;cursor:pointer">Products</div>
+      <div style="font-size:13.5px;color:#8A8273;padding-bottom:13px;cursor:pointer">Settings</div>
+    </div>
+
+    <div style="position:relative;margin-bottom:18px">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#8A8273" stroke-width="2" style="position:absolute;left:15px;top:50%;transform:translateY(-50%)"><circle cx="11" cy="11" r="7"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+      <input type="text" value="{{ search }}" onChange="{{ onSearch }}" placeholder="Search products by name or SKU…" style="width:100%;font-family:'Inter',sans-serif;font-size:14px;color:#1F2A24;background:#fff;border:1px solid #E4DCC9;border-radius:12px;padding:13px 16px 13px 42px">
+    </div>
+
+    <sc-if value="{{ loading }}" hint-placeholder-val="{{ true }}">
+      <div style="background:#fff;border:1px solid #E4DCC9;border-radius:16px;padding:80px 0;display:flex;justify-content:center;align-items:center">
+        <div style="width:34px;height:34px;border:3px solid #F1EAD9;border-top-color:#2F6F4F;border-radius:50%;animation:spin 0.8s linear infinite"></div>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ notLoading }}" hint-placeholder-val="{{ false }}">
+      <div style="background:#fff;border:1px solid #E4DCC9;border-radius:16px;overflow:hidden">
+        <div style="display:grid;grid-template-columns:56px minmax(150px,1.7fr) 1.1fr 0.95fr 1.1fr 1.05fr 148px;align-items:center;gap:14px;background:#FBF7F0;border-bottom:1px solid #E4DCC9;padding:13px 22px">
+          <div style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:0.1em;text-transform:uppercase;color:#8A8273">Image</div>
+          <div onClick="{{ sortName }}" style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:0.1em;text-transform:uppercase;color:#8A8273;cursor:pointer;user-select:none">Name {{ arrowName }}</div>
+          <div style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:0.1em;text-transform:uppercase;color:#8A8273">SKU</div>
+          <div onClick="{{ sortPrice }}" style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:0.1em;text-transform:uppercase;color:#8A8273;cursor:pointer;user-select:none">Price {{ arrowPrice }}</div>
+          <div style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:0.1em;text-transform:uppercase;color:#8A8273">Category</div>
+          <div onClick="{{ sortStock }}" style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:0.1em;text-transform:uppercase;color:#8A8273;cursor:pointer;user-select:none">Stock {{ arrowStock }}</div>
+          <div style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:0.1em;text-transform:uppercase;color:#8A8273;text-align:right">Actions</div>
+        </div>
+
+        <sc-if value="{{ isEmpty }}" hint-placeholder-val="{{ false }}">
+          <div style="padding:64px 0;text-align:center;color:#8A8273;font-size:14px">No products found.</div>
+        </sc-if>
+
+        <sc-for list="{{ rows }}" as="row" hint-placeholder-count="0">
+          <div style="display:grid;grid-template-columns:56px minmax(150px,1.7fr) 1.1fr 0.95fr 1.1fr 1.05fr 148px;align-items:center;gap:14px;padding:16px 22px;border-bottom:1px solid #F1EAD9">
+            <sc-if value="{{ row.hasImage }}" hint-placeholder-val="{{ false }}">
+              <div style="width:32px;height:32px;border-radius:8px;background:linear-gradient(135deg,#E3EEE6,#cfe2d5)"></div>
+            </sc-if>
+            <sc-if value="{{ row.noImage }}" hint-placeholder-val="{{ false }}">
+              <div style="width:32px;height:32px;border-radius:8px;background:repeating-linear-gradient(45deg,#F5F0E4,#F5F0E4 4px,#EFE8D8 4px,#EFE8D8 8px);border:1px solid #E4DCC9"></div>
+            </sc-if>
+            <div style="font-weight:600;font-size:14px;color:#1F2A24">{{ row.name }}</div>
+            <div style="font-family:'IBM Plex Mono',monospace;font-size:12px;color:#8A8273">{{ row.sku }}</div>
+            <div style="font-family:'IBM Plex Mono',monospace;font-size:13px;color:#1F2A24">{{ row.priceText }}</div>
+            <div><span style="display:inline-block;font-size:11.5px;background:#F0ECE2;color:#8A8273;padding:4px 10px;border-radius:20px">{{ row.categoryName }}</span></div>
+            <div style="display:flex;align-items:center;gap:9px">
+              <span style="font-family:'IBM Plex Mono',monospace;font-size:13px;color:#1F2A24">{{ row.stockQuantity }}</span>
+              <sc-if value="{{ row.stockIn }}" hint-placeholder-val="{{ false }}"><span style="font-size:10.5px;font-family:'IBM Plex Mono',monospace;letter-spacing:0.03em;background:#E3EEE6;color:#2F6F4F;padding:3px 8px;border-radius:20px;white-space:nowrap">In stock</span></sc-if>
+              <sc-if value="{{ row.stockLow }}" hint-placeholder-val="{{ false }}"><span style="font-size:10.5px;font-family:'IBM Plex Mono',monospace;letter-spacing:0.03em;background:#F6EAD2;color:#A87420;padding:3px 8px;border-radius:20px">Low</span></sc-if>
+              <sc-if value="{{ row.stockOut }}" hint-placeholder-val="{{ false }}"><span style="font-size:10.5px;font-family:'IBM Plex Mono',monospace;letter-spacing:0.03em;background:#FBEEE8;color:#B14A2D;padding:3px 8px;border-radius:20px">Out</span></sc-if>
+            </div>
+            <div style="display:flex;justify-content:flex-end;gap:8px">
+              <button onClick="{{ row.onEdit }}" style="font-family:'Inter',sans-serif;font-size:12px;font-weight:500;color:#1F2A24;background:#fff;border:1px solid #E4DCC9;border-radius:9px;padding:7px 13px;cursor:pointer" style-hover="background:#FBF7F0">Edit</button>
+              <button onClick="{{ row.onDelete }}" style="font-family:'Inter',sans-serif;font-size:12px;font-weight:500;color:#B14A2D;background:#FBEEE8;border:1px solid #d98a6e;border-radius:9px;padding:7px 13px;cursor:pointer" style-hover="background:#f7e2d8">Delete</button>
+            </div>
+          </div>
+        </sc-for>
+      </div>
+
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-top:16px">
+        <div style="font-size:12.5px;color:#8A8273">{{ showingText }}</div>
+        <div style="display:flex;gap:9px">
+          <sc-if value="{{ hasPrev }}" hint-placeholder-val="{{ false }}"><button onClick="{{ onPrev }}" style="font-family:'Inter',sans-serif;font-size:12.5px;color:#1F2A24;background:#fff;border:1px solid #E4DCC9;border-radius:9px;padding:8px 15px;cursor:pointer" style-hover="background:#FBF7F0">Prev</button></sc-if>
+          <sc-if value="{{ noPrev }}" hint-placeholder-val="{{ true }}"><button disabled style="font-family:'Inter',sans-serif;font-size:12.5px;color:#C2BBAA;background:#fff;border:1px solid #E4DCC9;border-radius:9px;padding:8px 15px;cursor:not-allowed">Prev</button></sc-if>
+          <sc-if value="{{ hasNext }}" hint-placeholder-val="{{ false }}"><button onClick="{{ onNext }}" style="font-family:'Inter',sans-serif;font-size:12.5px;color:#1F2A24;background:#fff;border:1px solid #E4DCC9;border-radius:9px;padding:8px 15px;cursor:pointer" style-hover="background:#FBF7F0">Next</button></sc-if>
+          <sc-if value="{{ noNext }}" hint-placeholder-val="{{ true }}"><button disabled style="font-family:'Inter',sans-serif;font-size:12.5px;color:#C2BBAA;background:#fff;border:1px solid #E4DCC9;border-radius:9px;padding:8px 15px;cursor:not-allowed">Next</button></sc-if>
+        </div>
+      </div>
+    </sc-if>
+  </div>
+
+  <sc-if value="{{ editOpen }}" hint-placeholder-val="{{ false }}">
+    <div style="position:fixed;inset:0;background:rgba(31,42,36,0.42);backdrop-filter:blur(2px);display:flex;align-items:center;justify-content:center;padding:32px;z-index:50">
+      <div style="width:600px;max-width:100%;max-height:88vh;overflow-y:auto;background:#fff;border:1px solid #E4DCC9;border-radius:20px;box-shadow:0 24px 60px rgba(31,42,36,0.20);padding:28px">
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:0.1em;text-transform:uppercase;color:#8A8273;margin-bottom:7px">Product Details</div>
+        <h2 style="font-family:'Fraunces',serif;font-weight:600;font-size:24px;margin:0 0 22px;color:#1F2A24">{{ titleText }}</h2>
+
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px">
+          <div>
+            <div style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:0.1em;text-transform:uppercase;color:#8A8273;margin-bottom:7px">Name *</div>
+            <input type="text" value="{{ form.name }}" onChange="{{ onName }}" placeholder="Product name" style="width:100%;font-family:'Inter',sans-serif;font-size:14px;color:#1F2A24;background:#fff;border:1px solid #E4DCC9;border-radius:12px;padding:11px 13px">
+          </div>
+          <div>
+            <div style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:0.1em;text-transform:uppercase;color:#8A8273;margin-bottom:7px">SKU *</div>
+            <input type="text" value="{{ form.sku }}" onChange="{{ onSku }}" placeholder="ABC-000-0000" style="width:100%;font-family:'IBM Plex Mono',monospace;font-size:13px;color:#1F2A24;background:#fff;border:1px solid #E4DCC9;border-radius:12px;padding:11px 13px">
+          </div>
+        </div>
+
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px">
+          <div>
+            <div style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:0.1em;text-transform:uppercase;color:#8A8273;margin-bottom:7px">Price *</div>
+            <div style="display:flex;align-items:center;background:#fff;border:1px solid #E4DCC9;border-radius:12px;padding:0 13px">
+              <span style="font-family:'IBM Plex Mono',monospace;font-size:14px;color:#8A8273">$</span>
+              <input type="number" value="{{ form.price }}" onChange="{{ onPrice }}" placeholder="0.00" style="width:100%;font-family:'IBM Plex Mono',monospace;font-size:14px;color:#1F2A24;background:transparent;border:none;padding:11px 6px">
+            </div>
+          </div>
+          <div>
+            <div style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:0.1em;text-transform:uppercase;color:#8A8273;margin-bottom:7px">Category *</div>
+            <select value="{{ form.categoryId }}" onChange="{{ onCategoryChange }}" style="width:100%;font-family:'Inter',sans-serif;font-size:14px;color:#1F2A24;background:#fff;border:1px solid #E4DCC9;border-radius:12px;padding:11px 13px;cursor:pointer">
+              <sc-for list="{{ categories }}" as="cat" hint-placeholder-count="3"><option value="{{ cat.id }}">{{ cat.name }}</option></sc-for>
+            </select>
+          </div>
+        </div>
+
+        <sc-if value="{{ createMode }}" hint-placeholder-val="{{ false }}">
+          <div style="margin-bottom:16px">
+            <div style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:0.1em;text-transform:uppercase;color:#8A8273;margin-bottom:7px">Initial Stock</div>
+            <input type="number" value="{{ form.initialStock }}" onChange="{{ onInitialStock }}" placeholder="0" style="width:100%;font-family:'IBM Plex Mono',monospace;font-size:14px;color:#1F2A24;background:#fff;border:1px solid #E4DCC9;border-radius:12px;padding:11px 13px">
+          </div>
+        </sc-if>
+        <sc-if value="{{ editModeBool }}" hint-placeholder-val="{{ false }}">
+          <div style="margin-bottom:16px">
+            <div style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:0.1em;text-transform:uppercase;color:#8A8273;margin-bottom:7px">Stock Quantity</div>
+            <input type="number" value="{{ form.stockQuantity }}" onChange="{{ onStockQty }}" placeholder="0" style="width:100%;font-family:'IBM Plex Mono',monospace;font-size:14px;color:#1F2A24;background:#fff;border:1px solid #E4DCC9;border-radius:12px;padding:11px 13px">
+          </div>
+        </sc-if>
+
+        <div style="margin-bottom:16px">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:7px">
+            <div style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:0.1em;text-transform:uppercase;color:#8A8273">Description</div>
+            <sc-if value="{{ notGenerating }}" hint-placeholder-val="{{ true }}">
+              <button onClick="{{ onGenerate }}" style="font-family:'Inter',sans-serif;font-size:12px;font-weight:500;color:#2F6F4F;background:#fff;border:1px solid #2F6F4F;border-radius:8px;padding:5px 11px;cursor:pointer" style-hover="background:#E3EEE6">✨ Generate Content</button>
+            </sc-if>
+            <sc-if value="{{ generating }}" hint-placeholder-val="{{ false }}">
+              <button disabled style="display:flex;align-items:center;gap:7px;font-family:'Inter',sans-serif;font-size:12px;font-weight:500;color:#8A8273;background:#fff;border:1px solid #E4DCC9;border-radius:8px;padding:5px 11px;cursor:wait"><span style="width:11px;height:11px;border:2px solid #E3EEE6;border-top-color:#2F6F4F;border-radius:50%;animation:spin 0.7s linear infinite"></span>Generating…</button>
+            </sc-if>
+          </div>
+          <textarea rows="4" value="{{ form.description }}" onChange="{{ onDescription }}" placeholder="Describe the product…" style="width:100%;font-family:'Inter',sans-serif;font-size:14px;line-height:1.5;color:#1F2A24;background:#fff;border:1px solid #E4DCC9;border-radius:12px;padding:11px 13px;resize:vertical"></textarea>
+        </div>
+
+        <sc-if value="{{ showGenerated }}" hint-placeholder-val="{{ false }}">
+          <div style="background:#F7FAF8;border:1px solid #cfe2d5;border-radius:14px;padding:16px;margin-bottom:16px">
+            <div style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:0.1em;text-transform:uppercase;color:#2F6F4F;margin-bottom:12px">✨ Suggested by AI</div>
+            <div style="margin-bottom:11px">
+              <div style="font-family:'IBM Plex Mono',monospace;font-size:9.5px;letter-spacing:0.08em;text-transform:uppercase;color:#8A8273;margin-bottom:3px">SEO Title</div>
+              <div style="font-size:13.5px;color:#1F2A24">{{ seoTitle }}</div>
+            </div>
+            <div style="margin-bottom:13px">
+              <div style="font-family:'IBM Plex Mono',monospace;font-size:9.5px;letter-spacing:0.08em;text-transform:uppercase;color:#8A8273;margin-bottom:3px">Meta Description</div>
+              <div style="font-size:13px;line-height:1.5;color:#5c5648">{{ metaDescription }}</div>
+            </div>
+            <div style="font-family:'IBM Plex Mono',monospace;font-size:9.5px;letter-spacing:0.08em;text-transform:uppercase;color:#8A8273;margin-bottom:7px">Feature Bullets — click to add</div>
+            <div style="display:flex;flex-direction:column;gap:6px">
+              <sc-for list="{{ generatedFeatures }}" as="feat" hint-placeholder-count="0">
+                <button onClick="{{ feat.onAdd }}" style="display:flex;align-items:center;gap:9px;text-align:left;font-family:'Inter',sans-serif;font-size:13px;color:#1F2A24;background:#fff;border:1px solid #E4DCC9;border-radius:10px;padding:8px 11px;cursor:pointer" style-hover="background:#E3EEE6;border-color:#2F6F4F"><span style="color:#2F6F4F;font-weight:600">+</span>{{ feat.text }}</button>
+              </sc-for>
+            </div>
+          </div>
+        </sc-if>
+
+        <div style="margin-bottom:22px">
+          <div style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:0.1em;text-transform:uppercase;color:#8A8273;margin-bottom:7px">Product Image</div>
+          <sc-if value="{{ showNewPreview }}" hint-placeholder-val="{{ false }}">
+            <div style="display:flex;align-items:center;gap:14px;background:#FBF7F0;border:1px solid #E4DCC9;border-radius:12px;padding:12px">
+              {{ previewImg }}
+              <div style="flex:1;font-size:13px;color:#5c5648;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ form.imageName }}</div>
+              <button onClick="{{ removeImage }}" style="font-family:'Inter',sans-serif;font-size:12px;color:#B14A2D;background:#FBEEE8;border:1px solid #d98a6e;border-radius:8px;padding:6px 12px;cursor:pointer">Remove</button>
+            </div>
+          </sc-if>
+          <sc-if value="{{ showStoredImage }}" hint-placeholder-val="{{ false }}">
+            <div style="display:flex;align-items:center;gap:14px;background:#FBF7F0;border:1px solid #E4DCC9;border-radius:12px;padding:12px">
+              <div style="width:56px;height:56px;border-radius:9px;background:linear-gradient(135deg,#E3EEE6,#cfe2d5);border:1px solid #E4DCC9"></div>
+              <div style="flex:1;font-size:13px;color:#5c5648">Current image</div>
+              <button onClick="{{ removeImage }}" style="font-family:'Inter',sans-serif;font-size:12px;color:#B14A2D;background:#FBEEE8;border:1px solid #d98a6e;border-radius:8px;padding:6px 12px;cursor:pointer">Remove</button>
+            </div>
+          </sc-if>
+          <sc-if value="{{ showDropzone }}" hint-placeholder-val="{{ true }}">
+            <label onDragOver="{{ onDragOver }}" onDrop="{{ onDrop }}" style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;border:1.5px dashed #E4DCC9;border-radius:12px;padding:26px;cursor:pointer;text-align:center" style-hover="background:#FBF7F0;border-color:#cfae8f">
+              <div style="font-size:13.5px;color:#5c5648">Drag &amp; drop an image, or <span style="color:#2F6F4F;font-weight:500">browse</span></div>
+              <div style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:#C2BBAA">JPG or PNG · max 5MB</div>
+              <input type="file" accept="image/jpeg,image/png" onChange="{{ onFile }}" style="display:none">
+            </label>
+          </sc-if>
+        </div>
+
+        <div style="display:flex;justify-content:flex-end;gap:10px;border-top:1px solid #F1EAD9;padding-top:20px">
+          <button onClick="{{ closeEdit }}" style="font-family:'Inter',sans-serif;font-size:13px;font-weight:500;color:#1F2A24;background:#fff;border:1px solid #E4DCC9;border-radius:11px;padding:11px 18px;cursor:pointer" style-hover="background:#FBF7F0">Cancel</button>
+          <sc-if value="{{ notSaving }}" hint-placeholder-val="{{ true }}">
+            <button onClick="{{ onSave }}" style="font-family:'Inter',sans-serif;font-size:13px;font-weight:600;color:#fff;background:#1F2A24;border:1px solid #1F2A24;border-radius:11px;padding:11px 20px;cursor:pointer" style-hover="background:#2b382f">Save Product</button>
+          </sc-if>
+          <sc-if value="{{ saving }}" hint-placeholder-val="{{ false }}">
+            <button disabled style="display:flex;align-items:center;gap:8px;font-family:'Inter',sans-serif;font-size:13px;font-weight:600;color:#fff;background:#1F2A24;opacity:0.7;border:1px solid #1F2A24;border-radius:11px;padding:11px 20px;cursor:wait"><span style="width:12px;height:12px;border:2px solid rgba(255,255,255,0.4);border-top-color:#fff;border-radius:50%;animation:spin 0.7s linear infinite"></span>Saving…</button>
+          </sc-if>
+        </div>
+      </div>
+    </div>
+  </sc-if>
+
+  <sc-if value="{{ deleteOpen }}" hint-placeholder-val="{{ false }}">
+    <div style="position:fixed;inset:0;background:rgba(31,42,36,0.42);backdrop-filter:blur(2px);display:flex;align-items:center;justify-content:center;padding:32px;z-index:50">
+      <div style="width:400px;max-width:100%;background:#fff;border:1px solid #E4DCC9;border-radius:20px;box-shadow:0 24px 60px rgba(31,42,36,0.20);padding:28px;text-align:center">
+        <div style="width:54px;height:54px;border-radius:50%;background:#FBEEE8;border:1px solid #e9c8b8;display:flex;align-items:center;justify-content:center;font-size:22px;margin:0 auto 16px">🗑</div>
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:0.1em;text-transform:uppercase;color:#8A8273;margin-bottom:7px">Delete Product</div>
+        <h2 style="font-family:'Fraunces',serif;font-weight:600;font-size:22px;margin:0 0 10px;color:#1F2A24">Delete this product?</h2>
+        <p style="font-size:14px;line-height:1.5;color:#5c5648;margin:0 0 22px">You're about to permanently delete <strong style="color:#1F2A24">{{ deleteName }}</strong>. This action cannot be undone.</p>
+        <div style="display:flex;justify-content:center;gap:10px">
+          <button onClick="{{ closeDelete }}" style="font-family:'Inter',sans-serif;font-size:13px;font-weight:500;color:#1F2A24;background:#fff;border:1px solid #E4DCC9;border-radius:11px;padding:11px 18px;cursor:pointer" style-hover="background:#FBF7F0">Cancel</button>
+          <button onClick="{{ confirmDelete }}" style="font-family:'Inter',sans-serif;font-size:13px;font-weight:600;color:#fff;background:#B14A2D;border:1px solid #B14A2D;border-radius:11px;padding:11px 20px;cursor:pointer" style-hover="background:#9c3f25">Delete</button>
+        </div>
+      </div>
+    </div>
+  </sc-if>
+
+  <sc-if value="{{ importOpen }}" hint-placeholder-val="{{ false }}">
+    <div style="position:fixed;inset:0;background:rgba(31,42,36,0.42);backdrop-filter:blur(2px);display:flex;align-items:center;justify-content:center;padding:32px;z-index:50">
+      <div style="width:480px;max-width:100%;max-height:88vh;overflow-y:auto;background:#fff;border:1px solid #E4DCC9;border-radius:20px;box-shadow:0 24px 60px rgba(31,42,36,0.20);padding:28px">
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:0.1em;text-transform:uppercase;color:#8A8273;margin-bottom:7px">Bulk Import</div>
+        <h2 style="font-family:'Fraunces',serif;font-weight:600;font-size:24px;margin:0 0 20px;color:#1F2A24">Import products</h2>
+
+        <sc-if value="{{ importSelect }}" hint-placeholder-val="{{ true }}">
+          <label style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;border:1.5px dashed #E4DCC9;border-radius:14px;padding:38px 20px;cursor:pointer;text-align:center;margin-bottom:20px" style-hover="background:#FBF7F0;border-color:#cfae8f">
+            <div style="font-size:15px;font-weight:500;color:#1F2A24">Select a .xlsx file</div>
+            <div style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:#C2BBAA">Excel spreadsheet · max 10MB</div>
+            <input type="file" accept=".xlsx" onChange="{{ onImportFile }}" style="display:none">
+          </label>
+        </sc-if>
+        <sc-if value="{{ importUploading }}" hint-placeholder-val="{{ false }}">
+          <div style="display:flex;flex-direction:column;align-items:center;gap:14px;padding:44px 0;margin-bottom:20px">
+            <div style="width:32px;height:32px;border:3px solid #F1EAD9;border-top-color:#2F6F4F;border-radius:50%;animation:spin 0.8s linear infinite"></div>
+            <div style="font-size:13.5px;color:#8A8273">Uploading &amp; processing…</div>
+          </div>
+        </sc-if>
+        <sc-if value="{{ importResultState }}" hint-placeholder-val="{{ false }}">
+          <div style="display:flex;gap:12px;margin-bottom:16px">
+            <div style="flex:1;background:#E3EEE6;border-radius:12px;padding:16px;text-align:center">
+              <div style="font-family:'Fraunces',serif;font-weight:600;font-size:28px;color:#2F6F4F;line-height:1">{{ importAdded }}</div>
+              <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:0.08em;text-transform:uppercase;color:#2F6F4F;margin-top:5px">Added</div>
+            </div>
+            <div style="flex:1;background:#FBEEE8;border-radius:12px;padding:16px;text-align:center">
+              <div style="font-family:'Fraunces',serif;font-weight:600;font-size:28px;color:#B14A2D;line-height:1">{{ importFailed }}</div>
+              <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:0.08em;text-transform:uppercase;color:#B14A2D;margin-top:5px">Failed</div>
+            </div>
+          </div>
+          <sc-if value="{{ importHasErrors }}" hint-placeholder-val="{{ false }}">
+            <div style="border:1px solid #E4DCC9;border-radius:12px;overflow:hidden;margin-bottom:20px">
+              <button onClick="{{ toggleErrors }}" style="width:100%;display:flex;justify-content:space-between;align-items:center;font-family:'Inter',sans-serif;font-size:13px;font-weight:500;color:#1F2A24;background:#FBF7F0;border:none;padding:12px 15px;cursor:pointer">View error details<span style="font-family:'IBM Plex Mono',monospace;color:#8A8273">{{ errorToggleLabel }}</span></button>
+              <sc-if value="{{ errorsExpanded }}" hint-placeholder-val="{{ false }}">
+                <div>
+                  <div style="display:grid;grid-template-columns:64px 1fr;gap:12px;padding:9px 15px;border-top:1px solid #E4DCC9;background:#fff"><div style="font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:0.08em;text-transform:uppercase;color:#8A8273">Row</div><div style="font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:0.08em;text-transform:uppercase;color:#8A8273">Reason</div></div>
+                  <sc-for list="{{ importErrors }}" as="err" hint-placeholder-count="0">
+                    <div style="display:grid;grid-template-columns:64px 1fr;gap:12px;padding:9px 15px;border-top:1px solid #F1EAD9"><div style="font-family:'IBM Plex Mono',monospace;font-size:12.5px;color:#B14A2D">{{ err.row }}</div><div style="font-size:13px;color:#5c5648">{{ err.reason }}</div></div>
+                  </sc-for>
+                </div>
+              </sc-if>
+            </div>
+          </sc-if>
+        </sc-if>
+
+        <div style="display:flex;justify-content:flex-end;gap:10px;border-top:1px solid #F1EAD9;padding-top:18px">
+          <button onClick="{{ closeImport }}" style="font-family:'Inter',sans-serif;font-size:13px;font-weight:600;color:#fff;background:#1F2A24;border:1px solid #1F2A24;border-radius:11px;padding:11px 22px;cursor:pointer" style-hover="background:#2b382f">Done</button>
+        </div>
+      </div>
+    </div>
+  </sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:1160,&quot;height&quot;:860}}">
+// ── Data contract mirrors backend at /api/v1/products (JWT, Admin-only) ──
+const CATEGORIES = [
+  { id: 1, name: 'Electronics', slug: 'electronics', parentCategoryId: null, subcategoryCount: 0, subcategories: [] },
+  { id: 2, name: 'Fashion', slug: 'fashion', parentCategoryId: null, subcategoryCount: 0, subcategories: [] },
+  { id: 3, name: 'Home & Lifestyle', slug: 'home-lifestyle', parentCategoryId: null, subcategoryCount: 0, subcategories: [] },
+  { id: 4, name: 'Accessories', slug: 'accessories', parentCategoryId: null, subcategoryCount: 0, subcategories: [] },
+];
+const catName = (id) => (CATEGORIES.find(c => c.id === id) || {}).name || '';
+
+const P = (id, name, description, price, sku, imageUrl, categoryId, stock, rating, reviews, createdAt) => ({
+  id, name, description, price, sku, imageUrl, categoryId, categoryName: catName(categoryId),
+  storeId: 1, storeName: 'Shopit Flagship', storeSlug: 'shopit-flagship',
+  stockQuantity: stock, averageRating: rating, reviewCount: reviews, createdAt,
+});
+const PRODUCTS = [
+  P(1, 'Aria Smart Watch', 'Minimalist smartwatch with health tracking.', 249.00, 'ELC-AR-2201', 'img', 1, 42, 4.6, 128, '2026-01-14'),
+  P(2, 'Merino Knit Sweater', 'Soft merino wool crewneck.', 128.00, 'FSH-KN-1180', null, 2, 6, 4.8, 54, '2026-02-02'),
+  P(3, 'Oak Desk Lamp', 'Warm-toned oak base task lamp.', 89.00, 'HML-LMP-0342', null, 3, 0, 4.4, 31, '2026-01-28'),
+  P(4, 'Linen Button Shirt', 'Breathable European linen shirt.', 74.00, 'FSH-LN-0912', 'img', 2, 23, 4.5, 67, '2026-02-10'),
+  P(5, 'Wireless Earbuds Pro', 'Active noise-cancelling earbuds.', 179.00, 'ELC-EB-5510', null, 1, 8, 4.7, 210, '2026-01-06'),
+  P(6, 'Full-Grain Leather Tote', 'Hand-stitched vegetable-tanned tote.', 214.00, 'ACC-TT-3320', 'img', 4, 15, 4.9, 43, '2026-02-18'),
+  P(7, 'Hand-thrown Ceramic Vase', 'One-of-a-kind stoneware vase.', 58.00, 'HML-VS-0771', 'img', 3, 31, 4.6, 22, '2026-01-21'),
+  P(8, 'Canvas Weekender Bag', 'Waxed canvas travel duffel.', 156.00, 'ACC-WB-4402', null, 4, 0, 4.3, 38, '2026-02-05'),
+  P(9, 'Wool Felt Fedora', 'Classic structured wool hat.', 92.00, 'ACC-HT-2210', null, 4, 4, 4.2, 19, '2026-01-30'),
+  P(10, '4K Action Camera', 'Waterproof 4K/60 action cam.', 329.00, 'ELC-CM-8890', 'img', 1, 19, 4.5, 96, '2026-02-12'),
+  P(11, 'Organic Cotton Throw', 'GOTS-certified woven throw.', 64.00, 'HML-TH-1120', 'img', 3, 27, 4.7, 41, '2026-01-17'),
+  P(12, 'Selvedge Denim Jacket', 'Japanese selvedge trucker jacket.', 168.00, 'FSH-DJ-3301', 'img', 2, 11, 4.8, 58, '2026-02-08'),
+  P(13, 'Bluetooth Speaker Mini', 'Pocket speaker, 12h battery.', 99.00, 'ELC-SP-6640', null, 1, 2, 4.4, 74, '2026-01-25'),
+  P(14, 'Silk Scarf', 'Printed mulberry silk scarf.', 48.00, 'ACC-SC-5150', null, 4, 0, 4.6, 27, '2026-02-15'),
+];
+
+const fmtPrice = (n) => '$' + Number(n).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+const emptyForm = () => ({ name: '', sku: '', price: '', categoryId: 1, initialStock: '', stockQuantity: '', description: '', imagePreview: null, imageName: '', imageFile: null, hasStoredImage: false });
+
+class Component extends DCLogic {
+  state = {
+    loading: true,
+    products: PRODUCTS,
+    search: '', sortBy: 'name', sortOrder: 'asc',
+    pageNumber: 1, pageSize: 10,
+    editOpen: false, editMode: 'create', editId: null, form: emptyForm(),
+    generating: false, generated: null, saving: false,
+    deleteOpen: false, deleteTarget: null,
+    importOpen: false, importState: 'select', importResult: null, errorsExpanded: false,
+  };
+
+  componentDidMount() {
+    // TODO: GET /api/v1/products?PageNumber=1&PageSize=10 (+ Search/SortBy/CategoryId)
+    setTimeout(() => this.setState({ loading: false }), 550);
+  }
+
+  // ── list controls ──
+  onSearch = (e) => this.setState({ search: e.target.value, pageNumber: 1 });
+  sort = (field) => this.setState(s => ({ sortBy: field, sortOrder: s.sortBy === field && s.sortOrder === 'asc' ? 'desc' : 'asc', pageNumber: 1 }));
+  sortName = () => this.sort('name');
+  sortPrice = () => this.sort('price');
+  sortStock = () => this.sort('stock');
+  onPrev = () => this.setState(s => ({ pageNumber: Math.max(1, s.pageNumber - 1) }));
+  onNext = () => this.setState(s => ({ pageNumber: s.pageNumber + 1 }));
+
+  // ── edit / create modal ──
+  openAdd = () => this.setState({ editOpen: true, editMode: 'create', editId: null, form: emptyForm(), generated: null, generating: false, saving: false });
+  openEdit = (p) => {
+    // TODO: optionally GET /api/v1/products/{id} for freshest data
+    this.setState({
+      editOpen: true, editMode: 'edit', editId: p.id, generated: null, generating: false, saving: false,
+      form: { name: p.name, sku: p.sku, price: String(p.price), categoryId: p.categoryId, initialStock: '', stockQuantity: String(p.stockQuantity), description: p.description || '', imagePreview: null, imageName: '', imageFile: null, hasStoredImage: !!p.imageUrl },
+    });
+  };
+  closeEdit = () => this.setState({ editOpen: false });
+  updateForm = (field, val) => this.setState(s => ({ form: { ...s.form, [field]: val } }));
+  onName = (e) => this.updateForm('name', e.target.value);
+  onSku = (e) => this.updateForm('sku', e.target.value);
+  onPrice = (e) => this.updateForm('price', e.target.value);
+  onCategoryChange = (e) => this.updateForm('categoryId', Number(e.target.value));
+  onInitialStock = (e) => this.updateForm('initialStock', e.target.value);
+  onStockQty = (e) => this.updateForm('stockQuantity', e.target.value);
+  onDescription = (e) => this.updateForm('description', e.target.value);
+
+  // ── image upload (client preview only; real upload is a 2nd call) ──
+  acceptFile = (file) => {
+    if (!file) return;
+    if (!/image\/(jpeg|png)/.test(file.type)) { alert('Please choose a JPG or PNG image.'); return; }
+    if (file.size > 5 * 1024 * 1024) { alert('Image must be 5MB or less.'); return; }
+    this.setState(s => ({ form: { ...s.form, imageFile: file, imagePreview: URL.createObjectURL(file), imageName: file.name } }));
+  };
+  onFile = (e) => this.acceptFile(e.target.files && e.target.files[0]);
+  onDragOver = (e) => e.preventDefault();
+  onDrop = (e) => { e.preventDefault(); this.acceptFile(e.dataTransfer.files && e.dataTransfer.files[0]); };
+  removeImage = () => {
+    // TODO: if editing an existing image, DELETE /api/v1/products/{id}/image
+    this.setState(s => ({ form: { ...s.form, imageFile: null, imagePreview: null, imageName: '', hasStoredImage: false } }));
+  };
+
+  // ── AI content generation ──
+  onGenerate = () => {
+    if (this.state.generating) return;
+    this.setState({ generating: true });
+    // TODO: POST /api/v1/products/{id}/generate-content — handle 429 (rate limit) by re-enabling the
+    //       button and showing "Too many requests, try again in a moment."
+    setTimeout(() => {
+      const name = this.state.form.name || 'this product';
+      this.setState(s => ({
+        generating: false,
+        generated: {
+          seoTitle: name + ' | Premium Quality at Shopit',
+          metaDescription: 'Discover the ' + name + ' at Shopit — thoughtfully made, built to last, and backed by free returns. Shop the boutique collection today.',
+          features: [
+            'Crafted from premium, responsibly-sourced materials',
+            'Designed to last with a 2-year quality guarantee',
+            'Free carbon-neutral shipping on every order',
+            '30-day hassle-free returns, no questions asked',
+            'Hand-inspected by our team before it ships',
+          ],
+        },
+        form: { ...s.form, description: s.form.description || ('The ' + name + ' blends everyday function with quiet, considered design. A go-to piece that earns its place in your routine.') },
+      }));
+    }, 1400);
+  };
+  addFeature = (text) => this.setState(s => ({ form: { ...s.form, description: (s.form.description ? s.form.description.replace(/\s*$/, '') + '\n' : '') + '• ' + text } }));
+
+  // ── save ──
+  onSave = () => {
+    if (this.state.saving) return;
+    const { form, editMode, editId } = this.state;
+    if (!form.name || !form.sku || !form.price) { alert('Name, SKU and Price are required.'); return; }
+    this.setState({ saving: true });
+    setTimeout(() => {
+      this.setState(s => {
+        let products;
+        if (editMode === 'create') {
+          // NOTE: CreateProductRequest requires storeId. Defaulting to the admin's own store (storeId:1)
+          //       here — ENGINEER: confirm whether admin should pick a store, or resolve from the session.
+          // TODO: POST /api/v1/products { name, description, price, sku, imageUrl, categoryId, storeId, initialStock }
+          //       then, if form.imageFile, POST /api/v1/products/{newId}/image (multipart, field "file").
+          const newId = Math.max(0, ...s.products.map(p => p.id)) + 1;
+          const np = P(newId, form.name, form.description || null, parseFloat(form.price) || 0, form.sku, form.imagePreview || null, Number(form.categoryId), parseInt(form.initialStock || '0', 10) || 0, 0, 0, new Date().toISOString().slice(0, 10));
+          products = [np, ...s.products];
+        } else {
+          // TODO: PUT /api/v1/products/{id} { name, description, price, sku, imageUrl, categoryId, stockQuantity }
+          //       then handle image add/remove via the image endpoints.
+          products = s.products.map(p => p.id === editId ? { ...p, name: form.name, description: form.description || null, price: parseFloat(form.price) || 0, sku: form.sku, categoryId: Number(form.categoryId), categoryName: catName(Number(form.categoryId)), stockQuantity: parseInt(form.stockQuantity || '0', 10) || 0, imageUrl: form.imagePreview || (form.hasStoredImage ? p.imageUrl : null) } : p);
+        }
+        return { products, saving: false, editOpen: false };
+      });
+    }, 900);
+  };
+
+  // ── delete ──
+  openDelete = (p) => this.setState({ deleteOpen: true, deleteTarget: p });
+  closeDelete = () => this.setState({ deleteOpen: false });
+  confirmDelete = () => {
+    // TODO: DELETE /api/v1/products/{id} → 204
+    this.setState(s => ({ deleteOpen: false, products: s.products.filter(p => p.id !== (s.deleteTarget || {}).id) }));
+  };
+
+  // ── import ──
+  openImport = () => this.setState({ importOpen: true, importState: 'select', importResult: null, errorsExpanded: false });
+  closeImport = () => this.setState({ importOpen: false });
+  onImportFile = (e) => {
+    const f = e.target.files && e.target.files[0];
+    if (!f) return;
+    this.setState({ importState: 'uploading' });
+    // TODO: POST /api/v1/products/import (multipart, field "file", .xlsx ≤10MB) → { addedCount, failedCount, errors }
+    setTimeout(() => this.setState({
+      importState: 'result',
+      importResult: { addedCount: 8, failedCount: 2, errors: [
+        { row: 4, reason: 'SKU "FSH-LN-0912" already exists' },
+        { row: 11, reason: 'Price must be a positive number' },
+      ] },
+    }), 1500);
+  };
+  toggleErrors = () => this.setState(s => ({ errorsExpanded: !s.errorsExpanded }));
+
+  renderVals() {
+    const s = this.state;
+    const q = s.search.trim().toLowerCase();
+    let list = s.products.filter(p => !q || p.name.toLowerCase().includes(q) || p.sku.toLowerCase().includes(q));
+    list = [...list].sort((a, b) => {
+      let av, bv;
+      if (s.sortBy === 'price') { av = a.price; bv = b.price; }
+      else if (s.sortBy === 'stock') { av = a.stockQuantity; bv = b.stockQuantity; }
+      else { av = a.name.toLowerCase(); bv = b.name.toLowerCase(); }
+      const c = av < bv ? -1 : av > bv ? 1 : 0;
+      return s.sortOrder === 'asc' ? c : -c;
+    });
+    const total = list.length;
+    const totalPages = Math.max(1, Math.ceil(total / s.pageSize));
+    const page = Math.min(s.pageNumber, totalPages);
+    const start = (page - 1) * s.pageSize;
+    const pageItems = list.slice(start, start + s.pageSize);
+    const rows = pageItems.map(p => ({
+      name: p.name, sku: p.sku, priceText: fmtPrice(p.price), categoryName: p.categoryName, stockQuantity: p.stockQuantity,
+      hasImage: !!p.imageUrl, noImage: !p.imageUrl,
+      stockIn: p.stockQuantity > 10, stockLow: p.stockQuantity >= 1 && p.stockQuantity <= 10, stockOut: p.stockQuantity === 0,
+      onEdit: () => this.openEdit(p), onDelete: () => this.openDelete(p),
+    }));
+    const arrow = (f) => s.sortBy === f ? (s.sortOrder === 'asc' ? '▲' : '▼') : '';
+
+    const gen = s.generated;
+    const del = s.deleteTarget;
+    const imp = s.importResult;
+
+    return {
+      loading: s.loading, notLoading: !s.loading,
+      isEmpty: !s.loading && total === 0, hasRows: total > 0, rows,
+      search: s.search, onSearch: this.onSearch,
+      arrowName: arrow('name'), arrowPrice: arrow('price'), arrowStock: arrow('stock'),
+      sortName: this.sortName, sortPrice: this.sortPrice, sortStock: this.sortStock,
+      showingText: 'Showing ' + pageItems.length + ' of ' + total + ' products',
+      hasPrev: page > 1, noPrev: page <= 1, hasNext: page < totalPages, noNext: page >= totalPages,
+      onPrev: this.onPrev, onNext: this.onNext,
+      openAdd: this.openAdd, openImport: this.openImport,
+
+      // edit modal
+      editOpen: s.editOpen, closeEdit: this.closeEdit,
+      titleText: s.editMode === 'create' ? 'New Product' : 'Edit Product',
+      createMode: s.editMode === 'create', editModeBool: s.editMode === 'edit',
+      form: s.form, categories: CATEGORIES,
+      onName: this.onName, onSku: this.onSku, onPrice: this.onPrice, onCategoryChange: this.onCategoryChange,
+      onInitialStock: this.onInitialStock, onStockQty: this.onStockQty, onDescription: this.onDescription,
+      showNewPreview: !!s.form.imagePreview,
+      previewImg: s.form.imagePreview ? React.createElement('img', { src: s.form.imagePreview, alt: 'preview', style: { width: 56, height: 56, objectFit: 'cover', borderRadius: 9, border: '1px solid #E4DCC9' } }) : null,
+      showStoredImage: !s.form.imagePreview && s.form.hasStoredImage,
+      showDropzone: !s.form.imagePreview && !s.form.hasStoredImage,
+      onFile: this.onFile, onDragOver: this.onDragOver, onDrop: this.onDrop, removeImage: this.removeImage,
+      onGenerate: this.onGenerate, generating: s.generating, notGenerating: !s.generating,
+      showGenerated: !!gen,
+      seoTitle: gen ? gen.seoTitle : '', metaDescription: gen ? gen.metaDescription : '',
+      generatedFeatures: gen ? gen.features.map(t => ({ text: t, onAdd: () => this.addFeature(t) })) : [],
+      onSave: this.onSave, saving: s.saving, notSaving: !s.saving,
+
+      // delete modal
+      deleteOpen: s.deleteOpen, closeDelete: this.closeDelete, confirmDelete: this.confirmDelete,
+      deleteName: del ? del.name : '',
+
+      // import modal
+      importOpen: s.importOpen, closeImport: this.closeImport,
+      importSelect: s.importState === 'select', importUploading: s.importState === 'uploading', importResultState: s.importState === 'result',
+      onImportFile: this.onImportFile,
+      importAdded: imp ? imp.addedCount : 0, importFailed: imp ? imp.failedCount : 0,
+      importHasErrors: imp ? imp.failedCount > 0 : false, importErrors: imp ? imp.errors : [],
+      errorsExpanded: s.errorsExpanded, toggleErrors: this.toggleErrors,
+      errorToggleLabel: s.errorsExpanded ? '−' : '+',
+    };
+  }
+}
+</script>
+</body>
+</html>

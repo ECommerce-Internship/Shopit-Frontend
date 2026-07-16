@@ -27,7 +27,23 @@ function badgeColors(status: string): BadgeColors {
   return map[status] || map['Pending'];
 }
 
-const FLOW = ['Pending', 'Confirmed', 'Shipped', 'Delivered'];
+function StatusBadge({ status }: { status: string }) {
+  const c = badgeColors(status);
+  return (
+    <span style={{
+      display: 'inline-flex', alignItems: 'center', gap: '6px',
+      padding: '4px 11px', borderRadius: '999px',
+      fontFamily: "'Inter', sans-serif", fontSize: '12px', fontWeight: 600,
+      letterSpacing: '0.01em', background: c.bg, color: c.fg,
+      textDecoration: status === 'Cancelled' ? 'line-through' : 'none',
+    }}>
+      <span style={{ display: 'inline-block', width: '6px', height: '6px', borderRadius: '50%', background: c.dot }}></span>
+      {status}
+    </span>
+  );
+}
+
+const FLOW = ['Pending', 'Processing', 'Shipped', 'Delivered'];
 
 function ProgressBar({ status }: { status: string }) {
   const isCancelled = status.toLowerCase() === 'cancelled';
@@ -222,8 +238,13 @@ function OrderDetailPage() {
 
         {/* Progress tracker */}
         <div style={{ background: '#FFFFFF', border: '1px solid #E4DCC9', borderRadius: '16px', padding: '34px 40px 30px', marginBottom: '24px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '22px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '22px', gap: '16px', flexWrap: 'wrap' }}>
             <h2 style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: '11px', letterSpacing: '0.14em', textTransform: 'uppercase', color: '#8A8273', margin: 0 }}>Order Progress</h2>
+            {hasStoreOrders && (
+              <span style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: '11px', color: '#8A8273' }}>
+                Overall status rolled up across {order.storeOrders.length} {order.storeOrders.length === 1 ? 'store' : 'stores'}
+              </span>
+            )}
           </div>
           <ProgressBar status={order.status} />
         </div>
@@ -242,8 +263,11 @@ function OrderDetailPage() {
                       {storeOrder.storeName.charAt(0)}
                     </div>
                     <span style={{ fontFamily: "'Fraunces', serif", fontWeight: 600, fontSize: '17px' }}>{storeOrder.storeName}</span>
-                    <span style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: '11px', color: '#8A8273', marginLeft: 'auto' }}>
-                      {storeOrder.items.length} {storeOrder.items.length === 1 ? 'item' : 'items'}
+                    <span style={{ marginLeft: 'auto', display: 'inline-flex', alignItems: 'center', gap: '12px' }}>
+                      <span style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: '11px', color: '#8A8273' }}>
+                        {storeOrder.items.length} {storeOrder.items.length === 1 ? 'item' : 'items'}
+                      </span>
+                      <StatusBadge status={storeOrder.status} />
                     </span>
                   </div>
 
@@ -269,6 +293,12 @@ function OrderDetailPage() {
                       <div style={{ textAlign: 'right', fontFamily: "'IBM Plex Mono', monospace", fontSize: '13px', fontWeight: 500 }}>{formatPrice(item.subtotal)}</div>
                     </div>
                   ))}
+
+                  {/* Store subtotal */}
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 24px', background: '#FBF7F0' }}>
+                    <span style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: '11px', letterSpacing: '0.1em', textTransform: 'uppercase', color: '#8A8273' }}>Store subtotal</span>
+                    <span style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: '14px', fontWeight: 500 }}>{formatPrice(storeOrder.subTotal)}</span>
+                  </div>
                 </div>
               ))
             ) : (
