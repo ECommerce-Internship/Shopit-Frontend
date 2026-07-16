@@ -1,8 +1,8 @@
-import { useEffect, useRef, type CSSProperties } from 'react';
+﻿import { useEffect, useRef, type CSSProperties } from 'react';
 import { Link } from 'react-router-dom';
 
 // ---------------------------------------------------------------------------
-// Shopit landing page — the public front door shown at "/".
+// Shopit landing page â€” the public front door shown at "/".
 // Visual design generated in Claude Design and converted to React here.
 // CTAs are wired to the real app routes (/products, /login, /register).
 // Animations (scroll reveals, magnetic buttons, hero parallax, SVG line draw)
@@ -218,23 +218,6 @@ function LandingPage() {
           >
             Sign in
           </Link>
-          <Link
-            to="/products"
-            data-magnetic
-            style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: '8px',
-              padding: '11px 22px',
-              borderRadius: '999px',
-              background: 'linear-gradient(135deg, #22C55E, #15803D)',
-              color: '#fff',
-              fontWeight: 600,
-              boxShadow: '0 8px 20px rgba(22,163,74,.28)',
-            }}
-          >
-            Start Shopping
-          </Link>
         </nav>
       </header>
 
@@ -257,26 +240,6 @@ function LandingPage() {
         <div style={{ position: 'absolute', top: '8%', left: '12%', width: '420px', height: '420px', borderRadius: '50%', background: 'radial-gradient(circle, rgba(34,197,94,.16), transparent 65%)', filter: 'blur(20px)', animation: 'shopit-haloBreathe 7s ease-in-out infinite', pointerEvents: 'none' }} />
         <div style={{ position: 'absolute', bottom: '4%', right: '8%', width: '480px', height: '480px', borderRadius: '50%', background: 'radial-gradient(circle, rgba(21,128,61,.14), transparent 65%)', filter: 'blur(24px)', animation: 'shopit-haloBreathe 9s ease-in-out infinite .8s', pointerEvents: 'none' }} />
 
-        {/* floating ticket stubs (parallax) */}
-        <div data-depth="2.2" style={{ position: 'absolute', top: '16%', left: '7%', width: '158px', transform: 'rotate(-9deg)', animation: 'shopit-floatY 8s ease-in-out infinite', pointerEvents: 'none' }}>
-          <div style={{ position: 'relative', padding: '14px', borderRadius: '14px', background: '#FFFFFF', border: '1px solid rgba(34,197,94,.22)', boxShadow: '0 18px 44px rgba(20,60,38,.14), 0 0 22px rgba(34,197,94,.10)' }}>
-            <div style={{ height: '78px', borderRadius: '8px', background: 'repeating-linear-gradient(45deg, rgba(34,197,94,.07) 0 7px, rgba(34,197,94,.02) 7px 14px)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: mono, fontSize: '9px', color: '#8AA394', letterSpacing: '.5px' }}>product shot</div>
-            <div style={{ marginTop: '9px', fontFamily: mono, fontSize: '9px', letterSpacing: '1px', color: '#16A34A' }}>ADMIT · ONE</div>
-          </div>
-        </div>
-        <div data-depth="1.4" style={{ position: 'absolute', top: '22%', right: '9%', width: '140px', transform: 'rotate(7deg)', animation: 'shopit-floatYb 10s ease-in-out infinite .5s', pointerEvents: 'none' }}>
-          <div style={{ padding: '13px', borderRadius: '14px', background: '#FFFFFF', border: '1px solid rgba(52,211,153,.3)', boxShadow: '0 18px 44px rgba(20,60,38,.14), 0 0 22px rgba(21,128,61,.10)' }}>
-            <div style={{ height: '64px', borderRadius: '8px', background: 'repeating-linear-gradient(45deg, rgba(34,197,94,.07) 0 7px, rgba(34,197,94,.02) 7px 14px)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: mono, fontSize: '9px', color: '#8AA394' }}>deal card</div>
-            <div style={{ marginTop: '8px', height: '5px', width: '60%', borderRadius: '3px', background: 'rgba(91,117,103,.35)' }} />
-          </div>
-        </div>
-        <div data-depth="3" style={{ position: 'absolute', bottom: '16%', left: '13%', width: '120px', transform: 'rotate(6deg)', animation: 'shopit-floatY 11s ease-in-out infinite 1.2s', pointerEvents: 'none' }}>
-          <div style={{ padding: '11px', borderRadius: '12px', background: '#FFFFFF', border: '1px solid rgba(74,222,128,.32)', boxShadow: '0 14px 36px rgba(20,60,38,.14), 0 0 18px rgba(74,222,128,.10)' }}>
-            <div style={{ height: '52px', borderRadius: '7px', background: 'repeating-linear-gradient(45deg, rgba(34,197,94,.07) 0 7px, rgba(34,197,94,.02) 7px 14px)' }} />
-            <div style={{ marginTop: '7px', fontFamily: mono, fontSize: '8px', letterSpacing: '1px', color: '#16A34A' }}>№ 0042</div>
-          </div>
-        </div>
-        <div data-depth="1.8" style={{ position: 'absolute', bottom: '22%', right: '13%', width: '96px', height: '96px', borderRadius: '16px', background: 'linear-gradient(135deg, rgba(34,197,94,.18), rgba(21,128,61,.12))', border: '1px solid rgba(34,197,94,.3)', boxShadow: '0 10px 30px rgba(20,60,38,.12)', transform: 'rotate(-12deg)', animation: 'shopit-floatYb 9s ease-in-out infinite', pointerEvents: 'none' }} />
 
         {/* particles */}
         <div style={{ position: 'absolute', top: '30%', left: '30%', width: '6px', height: '6px', borderRadius: '50%', background: '#22C55E', boxShadow: '0 0 10px 2px rgba(34,197,94,.45)', animation: 'shopit-glowPulse 4s ease-in-out infinite', pointerEvents: 'none' }} />
@@ -301,14 +264,14 @@ function LandingPage() {
           </h1>
 
           <p style={{ maxWidth: '560px', margin: '28px auto 0', fontSize: 'clamp(16px, 2vw, 19px)', lineHeight: 1.6, color: '#5B7567', animation: 'shopit-riseIn 1s cubic-bezier(.2,.7,.2,1) both', animationDelay: '620ms' }}>
-            Your one-stop store for fashion, electronics, and everything in between — at prices you'll love.
+            Your one-stop store for fashion, electronics, and everything in between â€” at prices you'll love.
           </p>
 
-          <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'center', gap: '18px', marginTop: '40px', animation: 'shopit-riseIn 1s cubic-bezier(.2,.7,.2,1) both', animationDelay: '740ms' }}>
-            <Link to="/products" data-magnetic style={{ display: 'inline-flex', alignItems: 'center', gap: '10px', padding: '17px 34px', borderRadius: '999px', background: 'linear-gradient(135deg, #22C55E, #15803D)', color: '#fff', fontWeight: 600, fontSize: '16.5px', boxShadow: '0 10px 28px rgba(22,163,74,.32)' }}>
-              Start Shopping <span style={{ fontSize: '18px' }}>→</span>
+          <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: "18px", marginTop: "40px", animation: "shopit-riseIn 1s cubic-bezier(.2,.7,.2,1) both", animationDelay: "740ms" }}>
+            <Link to="/products" style={{ display: "inline-flex", alignItems: "center", gap: "10px", padding: "20px 44px", borderRadius: "999px", background: "linear-gradient(135deg, #22C55E, #15803D)", color: "#fff", fontWeight: 600, fontSize: "19px", boxShadow: "0 10px 28px rgba(22,163,74,.32)" }}>
+              Start Shopping <span style={{ fontSize: "20px" }}>→</span>
             </Link>
-            <Link to="/products" style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', padding: '17px 28px', borderRadius: '999px', border: '1px solid rgba(34,197,94,.4)', color: '#15803D', fontWeight: 600, fontSize: '16px' }}>
+            <Link to="/products" style={{ display: "inline-flex", alignItems: "center", gap: "8px", padding: "17px 28px", borderRadius: "999px", border: "1px solid rgba(34,197,94,.4)", color: "#15803D", fontWeight: 600, fontSize: "16px" }}>
               Browse Deals
             </Link>
           </div>
@@ -327,17 +290,16 @@ function LandingPage() {
 
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '26px' }}>
           {[
-            { icon: '⚡', title: 'Fast delivery', body: 'At your door in days, not weeks.', border: 'rgba(34,197,94,.2)', iconBg: 'linear-gradient(135deg, rgba(34,197,94,.18), rgba(34,197,94,.04))', iconBorder: 'rgba(34,197,94,.4)', dash: 'rgba(34,197,94,.4)', stub: 'STUB · 01', delay: 0 },
-            { icon: '★', title: 'Best prices', body: "Everyday low prices you won't beat.", border: 'rgba(52,211,153,.26)', iconBg: 'linear-gradient(135deg, rgba(52,211,153,.2), rgba(52,211,153,.04))', iconBorder: 'rgba(52,211,153,.45)', dash: 'rgba(52,211,153,.45)', stub: 'STUB · 02', delay: 100 },
-            { icon: '🔒', title: 'Secure checkout', body: 'Pay safely with encrypted, one-tap checkout.', border: 'rgba(74,222,128,.28)', iconBg: 'linear-gradient(135deg, rgba(74,222,128,.2), rgba(74,222,128,.04))', iconBorder: 'rgba(74,222,128,.45)', dash: 'rgba(74,222,128,.45)', stub: 'STUB · 03', delay: 200 },
-            { icon: '◆', title: 'Wide selection', body: 'Thousands of products across every category.', border: 'rgba(34,197,94,.22)', iconBg: 'linear-gradient(135deg, rgba(21,128,61,.22), rgba(34,197,94,.05))', iconBorder: 'rgba(34,197,94,.45)', dash: 'rgba(34,197,94,.4)', stub: 'STUB · 04', delay: 300 },
+            { icon: 'âš¡', title: 'Fast delivery', body: 'At your door in days, not weeks.', border: 'rgba(34,197,94,.2)', iconBg: 'linear-gradient(135deg, rgba(34,197,94,.18), rgba(34,197,94,.04))', iconBorder: 'rgba(34,197,94,.4)', dash: 'rgba(34,197,94,.4)', stub: 'STUB Â· 01', delay: 0 },
+            { icon: 'â˜…', title: 'Best prices', body: "Everyday low prices you won't beat.", border: 'rgba(52,211,153,.26)', iconBg: 'linear-gradient(135deg, rgba(52,211,153,.2), rgba(52,211,153,.04))', iconBorder: 'rgba(52,211,153,.45)', dash: 'rgba(52,211,153,.45)', stub: 'STUB Â· 02', delay: 100 },
+            { icon: 'ðŸ”’', title: 'Secure checkout', body: 'Pay safely with encrypted, one-tap checkout.', border: 'rgba(74,222,128,.28)', iconBg: 'linear-gradient(135deg, rgba(74,222,128,.2), rgba(74,222,128,.04))', iconBorder: 'rgba(74,222,128,.45)', dash: 'rgba(74,222,128,.45)', stub: 'STUB Â· 03', delay: 200 },
+            { icon: 'â—†', title: 'Wide selection', body: 'Thousands of products across every category.', border: 'rgba(34,197,94,.22)', iconBg: 'linear-gradient(135deg, rgba(21,128,61,.22), rgba(34,197,94,.05))', iconBorder: 'rgba(34,197,94,.45)', dash: 'rgba(34,197,94,.4)', stub: 'STUB Â· 04', delay: 300 },
           ].map((c) => (
             <div key={c.stub} data-reveal data-delay={c.delay} style={{ ...revealStyle, transform: 'translateY(48px)' }}>
               <div style={{ position: 'relative', padding: '30px 28px 34px', borderRadius: '20px', background: '#FFFFFF', border: `1px solid ${c.border}`, boxShadow: '0 20px 50px rgba(20,60,38,.10)' }}>
                 <div style={{ width: '52px', height: '52px', borderRadius: '14px', background: c.iconBg, border: `1px solid ${c.iconBorder}`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '24px' }}>{c.icon}</div>
                 <h3 style={{ margin: '22px 0 10px', fontFamily: serif, fontWeight: 600, fontSize: '23px', color: '#0C2417' }}>{c.title}</h3>
                 <p style={{ margin: 0, fontSize: '15px', lineHeight: 1.6, color: '#5B7567' }}>{c.body}</p>
-                <div style={{ position: 'absolute', left: 0, right: 0, bottom: '78px', borderTop: `2px dashed ${c.dash}` }} />
                 <div style={{ position: 'absolute', left: '28px', bottom: '28px', fontFamily: mono, fontSize: '10px', letterSpacing: '2px', color: '#16A34A' }}>{c.stub}</div>
               </div>
             </div>
@@ -418,7 +380,7 @@ function LandingPage() {
           {QUOTES.map((q) => (
             <div key={q.name} data-reveal data-delay={q.delay} style={{ ...revealStyle, transform: 'translateY(46px)', marginTop: q.offset }}>
               <div style={{ position: 'relative', padding: '32px 30px 30px', borderRadius: '20px', background: '#FFFFFF', border: '1px solid rgba(34,197,94,.2)', boxShadow: '0 20px 50px rgba(20,60,38,.10)', animation: 'shopit-floatY 9s ease-in-out infinite' }}>
-                <div style={{ fontFamily: mono, fontSize: '10px', letterSpacing: '2px', color: '#16A34A', marginBottom: '16px' }}>ADMIT · ONE</div>
+                <div style={{ fontFamily: mono, fontSize: '10px', letterSpacing: '2px', color: '#16A34A', marginBottom: '16px' }}>ADMIT Â· ONE</div>
                 <p style={{ margin: 0, fontFamily: serif, fontSize: '21px', lineHeight: 1.4, color: '#0C2417' }}>"{q.text}"</p>
                 <div style={{ position: 'relative', marginTop: '28px', paddingTop: '28px', borderTop: '2px dashed rgba(34,197,94,.35)' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '13px' }}>
@@ -443,9 +405,9 @@ function LandingPage() {
           <h2 style={{ margin: 0, fontFamily: serif, fontWeight: 600, fontSize: 'clamp(36px, 7vw, 82px)', lineHeight: 1, letterSpacing: '-2px', color: '#0C2417' }}>
             Deals ending <span style={{ fontStyle: 'italic', background: 'linear-gradient(135deg, #16A34A, #22C55E)', WebkitBackgroundClip: 'text', backgroundClip: 'text', color: 'transparent' }}>soon.</span>
           </h2>
-          <p style={{ margin: '24px auto 40px', maxWidth: '480px', fontSize: '18px', lineHeight: 1.6, color: '#5B7567' }}>Offers across every category — don't miss out.</p>
+          <p style={{ margin: '24px auto 40px', maxWidth: '480px', fontSize: '18px', lineHeight: 1.6, color: '#5B7567' }}>Offers across every category â€” don't miss out.</p>
           <Link to="/products" data-magnetic style={{ display: 'inline-flex', alignItems: 'center', gap: '10px', padding: '19px 40px', borderRadius: '999px', background: 'linear-gradient(135deg, #22C55E, #15803D)', color: '#fff', fontWeight: 600, fontSize: '17.5px', boxShadow: '0 12px 32px rgba(22,163,74,.35)' }}>
-            Start Shopping Now <span style={{ fontSize: '19px' }}>→</span>
+            Start Shopping Now <span style={{ fontSize: '19px' }}>â†’</span>
           </Link>
         </div>
       </section>
@@ -462,8 +424,8 @@ function LandingPage() {
           <FooterCol title="Company" links={[['About', '#'], ['Privacy Policy', '#'], ['Contact', '#']]} />
         </div>
         <div style={{ maxWidth: '1240px', margin: '48px auto 0', paddingTop: '24px', borderTop: '1px solid rgba(34,197,94,.14)', display: 'flex', flexWrap: 'wrap', gap: '12px', justifyContent: 'space-between', fontSize: '13px', color: '#8AA394' }}>
-          <span>© 2026 Shopit. Shop anywhere, anytime.</span>
-          <span style={{ fontFamily: mono, letterSpacing: '1px' }}>ADMIT · ONE</span>
+          <span>Â© 2026 Shopit. Shop anywhere, anytime.</span>
+          <span style={{ fontFamily: mono, letterSpacing: '1px' }}>ADMIT Â· ONE</span>
         </div>
       </footer>
     </div>
