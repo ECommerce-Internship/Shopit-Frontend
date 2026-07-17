@@ -136,3 +136,9 @@ export async function fetchStorefrontProducts(slug: string, page: number = 1, pa
   });
   return response.data;
 }
+export async function fetchSemanticProducts(query: string, take: number = 10): Promise<Product[]> {
+  const response = await axiosInstance.get<Product[]>('/api/v1/products/search/semantic', {
+    params: { q: query, take },
+  });
+  return response.data;
+}
