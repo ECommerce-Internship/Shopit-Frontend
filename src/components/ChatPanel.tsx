@@ -44,7 +44,9 @@ function formatTimestamp(date: Date): string {
 
 /**
  * Self-contained chat widget panel (SCRUM-110). Manages its own message
- * thread, input, conversationId, and loading state. Accepts no props.
+ * thread, input, conversationId, and loading state. Stays mounted while
+ * closed so the thread persists; isOpen only drives the open/close
+ * animation and input focus.
  *
  * 401 handling: axiosInstance's response interceptor already attempts a
  * token refresh and, on failure, redirects to /login automatically. So a
@@ -53,16 +55,21 @@ function formatTimestamp(date: Date): string {
  * underway by the time it does — no extra toast or navigation is added here
  * to avoid a confusing flash right before the redirect.
  */
-export function ChatPanel() {
+export function ChatPanel({ isOpen }: { isOpen: boolean }) {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState('');
   const [isSending, setIsSending] = useState(false);
   const [conversationId, setConversationId] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
+  const inputRef = useRef<HTMLInputElement | null>(null);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages, isSending]);
+
+  useEffect(() => {
+    if (isOpen) inputRef.current?.focus();
+  }, [isOpen]);
 
   async function handleSend() {
     const trimmed = input.trim();
@@ -122,7 +129,8 @@ export function ChatPanel() {
 
   return (
     <div
-      className="fixed bottom-24 right-6 w-96 h-[32rem] rounded-lg shadow-xl flex flex-col z-50"
+      aria-hidden={!isOpen}
+      className={`chat-panel ${isOpen ? '' : 'chat-panel-closed'} fixed bottom-24 right-6 w-96 h-[32rem] rounded-lg shadow-xl flex flex-col z-50`}
       style={panelStyle}
     >
       <div
@@ -172,6 +180,7 @@ export function ChatPanel() {
 
       <div className="px-3 py-3 border-t flex gap-2" style={{ borderColor: '#E4DCC9' }}>
         <input
+          ref={inputRef}
           type="text"
           value={input}
           onChange={(e) => setInput(e.target.value)}

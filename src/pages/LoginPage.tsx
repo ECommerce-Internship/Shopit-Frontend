@@ -1,9 +1,11 @@
 import { useState, type FormEvent } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { Eye, EyeOff } from 'lucide-react';
 import toast from 'react-hot-toast';
 import axiosInstance from '../api/axiosInstance';
 import { useAuth, getRedirectPathForRole } from '../context/AuthContext';
 import { AuthLayout } from '../components/AuthLayout';
+import { AuthModeSwitch, authAccent, type AuthMode } from '../components/AuthModeSwitch';
 
 const inputStyle = {
   fontFamily: "'Inter', sans-serif",
@@ -17,9 +19,15 @@ function LoginPage() {
   const [password, setPassword] = useState('');
   const [emailError, setEmailError] = useState<string | null>(null);
   const [passwordError, setPasswordError] = useState<string | null>(null);
+  const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
+  // Presentation-only: the login endpoint is role-agnostic (the role comes
+  // back in the token), so the switch just themes the form and swaps links.
+  const [mode, setMode] = useState<AuthMode>('customer');
   const { login } = useAuth();
   const navigate = useNavigate();
+
+  const accent = authAccent(mode);
 
   const validate = () => {
     let valid = true;
@@ -64,13 +72,8 @@ function LoginPage() {
   };
 
   return (
-    <AuthLayout eyebrow="Sign in">
-      <h2
-        className="text-2xl mb-6"
-        style={{ fontFamily: "'Fraunces', serif", fontWeight: 500, color: '#1F2A24' }}
-      >
-        Welcome back
-      </h2>
+    <AuthLayout eyebrow={mode === 'seller' ? 'Sign in · Seller' : 'Sign in · Customer'}>
+      <AuthModeSwitch mode={mode} onChange={setMode} />
 
       <form onSubmit={handleSubmit} className="flex flex-col gap-4">
         <div className="flex flex-col gap-1">
@@ -89,7 +92,7 @@ function LoginPage() {
             aria-invalid={!!emailError}
             aria-describedby={emailError ? 'login-email-error' : undefined}
             className="border rounded px-3 py-2 outline-none focus:ring-2"
-            style={{ ...inputStyle, '--tw-ring-color': '#2F6F4F' } as React.CSSProperties}
+            style={{ ...inputStyle, '--tw-ring-color': accent } as React.CSSProperties}
           />
           {emailError && (
             <p id="login-email-error" className="text-sm" style={{ color: '#D97B3F' }}>
@@ -106,16 +109,27 @@ function LoginPage() {
           >
             Password
           </label>
-          <input
-            id="login-password"
-            type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            aria-invalid={!!passwordError}
-            aria-describedby={passwordError ? 'login-password-error' : undefined}
-            className="border rounded px-3 py-2 outline-none focus:ring-2"
-            style={{ ...inputStyle, '--tw-ring-color': '#2F6F4F' } as React.CSSProperties}
-          />
+          <div className="relative">
+            <input
+              id="login-password"
+              type={showPassword ? 'text' : 'password'}
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              aria-invalid={!!passwordError}
+              aria-describedby={passwordError ? 'login-password-error' : undefined}
+              className="border rounded px-3 py-2 pr-10 outline-none focus:ring-2 w-full"
+              style={{ ...inputStyle, '--tw-ring-color': accent } as React.CSSProperties}
+            />
+            <button
+              type="button"
+              onClick={() => setShowPassword((prev) => !prev)}
+              aria-label={showPassword ? 'Hide password' : 'Show password'}
+              className="absolute right-2 top-1/2 -translate-y-1/2 p-1"
+              style={{ color: '#8A8273' }}
+            >
+              {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+            </button>
+          </div>
           {passwordError && (
             <p id="login-password-error" className="text-sm" style={{ color: '#D97B3F' }}>
               {passwordError}
@@ -124,7 +138,7 @@ function LoginPage() {
           <Link
             to="/forgot-password"
             className="text-[11px] underline self-end mt-1"
-            style={{ fontFamily: "'Inter', sans-serif", color: '#2F6F4F' }}
+            style={{ fontFamily: "'Inter', sans-serif", color: accent, transition: 'color 0.3s ease' }}
           >
             Forgot password?
           </Link>
@@ -133,10 +147,15 @@ function LoginPage() {
         <button
           type="submit"
           disabled={loading}
-          className="rounded px-3 py-2.5 text-white mt-2 transition-opacity disabled:opacity-50"
-          style={{ backgroundColor: '#2F6F4F', fontFamily: "'Inter', sans-serif", fontWeight: 500 }}
+          className="rounded px-3 py-2.5 text-white mt-2 disabled:opacity-50"
+          style={{
+            backgroundColor: accent,
+            fontFamily: "'Inter', sans-serif",
+            fontWeight: 500,
+            transition: 'background-color 0.3s ease, opacity 0.15s ease',
+          }}
         >
-          {loading ? 'Signing in...' : 'Sign in'}
+          {loading ? 'Signing in...' : mode === 'seller' ? 'Sign in to your store' : 'Sign in'}
         </button>
       </form>
 
@@ -181,13 +200,12 @@ function LoginPage() {
       >
         <p className="text-sm text-center" style={{ color: '#1F2A24' }}>
           New here?{' '}
-          <Link to="/register" className="font-medium underline" style={{ color: '#2F6F4F' }}>
+          <Link
+            to="/register"
+            className="font-medium underline"
+            style={{ color: accent, transition: 'color 0.3s ease' }}
+          >
             Create an account
-          </Link>
-        </p>
-        <p className="text-sm text-center">
-          <Link to="/sell" className="font-medium underline" style={{ color: '#D97B3F' }}>
-            Want to sell? Become a seller →
           </Link>
         </p>
       </div>
