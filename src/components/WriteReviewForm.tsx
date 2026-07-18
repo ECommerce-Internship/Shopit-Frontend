@@ -1,6 +1,6 @@
-import { useState } from 'react';
+﻿import { useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { Loader2 } from 'lucide-react';
+import { Loader2, Clock } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { submitReview } from '../api/reviewsApi';
 
@@ -51,6 +51,7 @@ function WriteReviewForm({ productId }: { productId: number }) {
   const queryClient = useQueryClient();
   const [rating, setRating] = useState(0);
   const [comment, setComment] = useState('');
+  const [justSubmitted, setJustSubmitted] = useState(false);
   const MAX_CHARS = 500;
 
   const submitMutation = useMutation({
@@ -59,6 +60,7 @@ function WriteReviewForm({ productId }: { productId: number }) {
       queryClient.invalidateQueries({ queryKey: ['reviews', String(productId)] });
       setRating(0);
       setComment('');
+      setJustSubmitted(true);
       toast.success('Review submitted!');
     },
     onError: (error: unknown) => {
@@ -67,6 +69,35 @@ function WriteReviewForm({ productId }: { productId: number }) {
       toast.error(msg);
     },
   });
+
+  if (justSubmitted) {
+    return (
+      <div
+        style={{
+          padding: '28px',
+          borderRadius: '16px',
+          backgroundColor: '#F7F3E9',
+          border: '1px solid #E4DCC9',
+          marginTop: '24px',
+          display: 'flex',
+          alignItems: 'flex-start',
+          gap: '14px',
+        }}
+      >
+        <div style={{ width: '36px', height: '36px', flexShrink: 0, borderRadius: '50%', backgroundColor: '#EFE4CB', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <Clock size={18} color="#A87420" />
+        </div>
+        <div>
+          <h3 style={{ fontFamily: "'Fraunces', serif", fontWeight: 600, fontSize: '18px', color: '#1F2A24', margin: '0 0 6px' }}>
+            Your review is pending moderation
+          </h3>
+          <p style={{ fontFamily: "'Inter', sans-serif", fontSize: '13.5px', color: '#5c5648', margin: 0, lineHeight: 1.5 }}>
+            Thanks for sharing your feedback. It will appear publicly once it's been reviewed, usually within a short while.
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div

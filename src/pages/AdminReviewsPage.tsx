@@ -1,10 +1,10 @@
-import { useState } from 'react';
+﻿import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Loader2 } from 'lucide-react';
+import { Loader2, Check, X } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { AdminTabs } from '../components/AdminTabs';
 import axiosInstance from '../api/axiosInstance';
-import { adminDeleteReview } from '../api/reviewsApi';
+import { adminDeleteReview, fetchModerationQueue, approveReview, rejectReview } from '../api/reviewsApi';
 import type { Review } from '../types/review';
 
 const labelMono = {
@@ -28,6 +28,21 @@ function StarDisplay({ rating }: { rating: number }) {
         <span key={star} style={{ fontSize: '14px', color: star <= rating ? '#D97B3F' : '#D9CFC0' }}>★</span>
       ))}
     </div>
+  );
+}
+
+function StatusBadge({ status }: { status: string }) {
+  const styles: Record<string, { bg: string; color: string }> = {
+    Approved: { bg: '#E3EEE6', color: '#2F6F4F' },
+    Pending: { bg: '#F6EAD2', color: '#A87420' },
+    Flagged: { bg: '#FBEEE8', color: '#B14A2D' },
+    Rejected: { bg: '#F1EAE3', color: '#8A6A56' },
+  };
+  const style = styles[status] ?? { bg: '#F1EAD9', color: '#8A8273' };
+  return (
+    <span style={{ ...labelMono, backgroundColor: style.bg, color: style.color, padding: '4px 10px', borderRadius: '999px', display: 'inline-block' }}>
+      {status}
+    </span>
   );
 }
 
@@ -58,6 +73,39 @@ function DeleteModal({ review, onConfirm, onCancel, isPending }: {
   );
 }
 
+function RejectModal({ review, onConfirm, onCancel, isPending }: {
+  review: Review;
+  onConfirm: (reason: string) => void;
+  onCancel: () => void;
+  isPending: boolean;
+}) {
+  const [reason, setReason] = useState('');
+  return (
+    <div style={{ position: 'fixed', inset: 0, zIndex: 50, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '24px', background: 'rgba(31,42,36,0.42)', backdropFilter: 'blur(2px)' }}>
+      <div style={{ width: '420px', maxWidth: '100%', background: '#fff', border: '1px solid #E4DCC9', borderRadius: '20px', boxShadow: '0 24px 60px rgba(31,42,36,0.20)', padding: '28px' }}>
+        <div style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: '11px', letterSpacing: '0.12em', textTransform: 'uppercase', color: '#8A8273', marginBottom: '10px' }}>Reject Review</div>
+        <h2 style={{ fontFamily: "'Fraunces', serif", fontWeight: 600, fontSize: '22px', lineHeight: 1.1, margin: '0 0 16px', color: '#1F2A24' }}>
+          By {review.reviewerFirstName} {review.reviewerLastName}
+        </h2>
+        <textarea
+          value={reason}
+          onChange={(e) => setReason(e.target.value)}
+          placeholder="Reason (optional)"
+          rows={3}
+          style={{ width: '100%', padding: '12px 14px', borderRadius: '10px', border: '1px solid #E4DCC9', backgroundColor: '#FBF7F0', fontFamily: "'Inter', sans-serif", fontSize: '14px', color: '#1F2A24', resize: 'vertical', outline: 'none', boxSizing: 'border-box', marginBottom: '20px' }}
+        />
+        <div style={{ display: 'flex', gap: '12px' }}>
+          <button onClick={onCancel} disabled={isPending} style={{ flex: 1, padding: '14px', borderRadius: '12px', border: '1px solid #E4DCC9', background: '#fff', color: '#1F2A24', fontFamily: "'Inter', sans-serif", fontSize: '14px', fontWeight: 600, cursor: 'pointer' }}>Cancel</button>
+          <button onClick={() => onConfirm(reason)} disabled={isPending} style={{ flex: 1, padding: '14px', borderRadius: '12px', border: '1px solid #B14A2D', background: '#B14A2D', color: '#fff', fontFamily: "'Inter', sans-serif", fontSize: '14px', fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
+            {isPending && <Loader2 size={14} className="animate-spin" />}
+            Reject
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 type AllReviewsResponse = {
   reviews: Review[];
   totalCount: number;
@@ -73,22 +121,50 @@ async function fetchAllReviews(page: number): Promise<AllReviewsResponse> {
 function AdminReviewsPage() {
   const queryClient = useQueryClient();
   const [page, setPage] = useState(1);
+  const [view, setView] = useState<'all' | 'queue'>('all');
   const [selectedReview, setSelectedReview] = useState<Review | null>(null);
+  const [rejectTarget, setRejectTarget] = useState<Review | null>(null);
 
   const { data, isLoading } = useQuery({
-    queryKey: ['admin-reviews', page],
-    queryFn: () => fetchAllReviews(page),
+    queryKey: view === 'all' ? ['admin-reviews', page] : ['moderation-queue', page],
+    queryFn: () => (view === 'all' ? fetchAllReviews(page) : fetchModerationQueue(page)),
   });
 
   const deleteMutation = useMutation({
     mutationFn: (reviewId: number) => adminDeleteReview(reviewId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin-reviews'] });
+      queryClient.invalidateQueries({ queryKey: ['moderation-queue'] });
       setSelectedReview(null);
       toast.success('Review deleted.');
     },
     onError: () => {
       toast.error('Could not delete review.');
+    },
+  });
+
+  const approveMutation = useMutation({
+    mutationFn: (reviewId: number) => approveReview(reviewId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin-reviews'] });
+      queryClient.invalidateQueries({ queryKey: ['moderation-queue'] });
+      toast.success('Review approved.');
+    },
+    onError: () => {
+      toast.error('Could not approve review.');
+    },
+  });
+
+  const rejectMutation = useMutation({
+    mutationFn: ({ reviewId, reason }: { reviewId: number; reason: string }) => rejectReview(reviewId, reason),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin-reviews'] });
+      queryClient.invalidateQueries({ queryKey: ['moderation-queue'] });
+      setRejectTarget(null);
+      toast.success('Review rejected.');
+    },
+    onError: () => {
+      toast.error('Could not reject review.');
     },
   });
 
@@ -106,26 +182,51 @@ function AdminReviewsPage() {
           isPending={deleteMutation.isPending}
         />
       )}
+      {rejectTarget && (
+        <RejectModal
+          review={rejectTarget}
+          onConfirm={(reason) => rejectMutation.mutate({ reviewId: rejectTarget.id, reason })}
+          onCancel={() => setRejectTarget(null)}
+          isPending={rejectMutation.isPending}
+        />
+      )}
 
       <div style={{ maxWidth: '1240px', margin: '0 auto', display: 'flex', gap: '40px', alignItems: 'flex-start' }}>
         <AdminTabs active="Reviews" />
         <div style={{ flex: 1, minWidth: 0 }}>
 
         {/* Header */}
-        <div style={{ marginBottom: '8px' }}>
-          <div style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: '11px', letterSpacing: '0.12em', textTransform: 'uppercase', color: '#8A8273', marginBottom: '8px' }}>Shopit Admin</div>
-          <h1 style={{ fontFamily: "'Fraunces', serif", fontWeight: 600, fontSize: '34px', lineHeight: 1, margin: 0 }}>Reviews</h1>
+        <div style={{ marginBottom: '8px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <div>
+            <div style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: '11px', letterSpacing: '0.12em', textTransform: 'uppercase', color: '#8A8273', marginBottom: '8px' }}>Shopit Admin</div>
+            <h1 style={{ fontFamily: "'Fraunces', serif", fontWeight: 600, fontSize: '34px', lineHeight: 1, margin: 0 }}>Reviews</h1>
+          </div>
+          <div style={{ display: 'flex', gap: '8px' }}>
+            <button
+              onClick={() => { setView('all'); setPage(1); }}
+              style={{ border: '1px solid #E4DCC9', background: view === 'all' ? '#1F2A24' : '#fff', color: view === 'all' ? '#fff' : '#1F2A24', borderRadius: '10px', padding: '10px 16px', fontFamily: "'Inter', sans-serif", fontSize: '13px', fontWeight: 600, cursor: 'pointer' }}
+            >
+              All Reviews
+            </button>
+            <button
+              onClick={() => { setView('queue'); setPage(1); }}
+              style={{ border: '1px solid #E4DCC9', background: view === 'queue' ? '#1F2A24' : '#fff', color: view === 'queue' ? '#fff' : '#1F2A24', borderRadius: '10px', padding: '10px 16px', fontFamily: "'Inter', sans-serif", fontSize: '13px', fontWeight: 600, cursor: 'pointer' }}
+            >
+              Moderation Queue
+            </button>
+          </div>
         </div>
 
         {/* Table */}
         <div style={{ background: '#fff', border: '1px solid #E4DCC9', borderRadius: '16px', overflow: 'hidden' }}>
           {/* Head row */}
-          <div style={{ display: 'grid', gridTemplateColumns: '0.8fr 1.2fr 1.2fr 1fr 1fr 0.8fr', gap: '16px', padding: '14px 22px', background: '#FBF7F0', borderBottom: '1px solid #E4DCC9', ...labelMono }}>
+          <div style={{ display: 'grid', gridTemplateColumns: '0.7fr 1fr 1.1fr 0.9fr 0.9fr 0.9fr 1.2fr', gap: '14px', padding: '14px 22px', background: '#FBF7F0', borderBottom: '1px solid #E4DCC9', ...labelMono }}>
             <div>Review ID</div>
             <div>Product</div>
             <div>Reviewer</div>
             <div>Rating</div>
             <div>Date</div>
+            <div>Status</div>
             <div style={{ textAlign: 'right' }}>Actions</div>
           </div>
 
@@ -135,19 +236,38 @@ function AdminReviewsPage() {
             </div>
           ) : reviews.length === 0 ? (
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '48px' }}>
-              <p style={{ color: '#8A8273' }}>No reviews found.</p>
+              <p style={{ color: '#8A8273' }}>{view === 'queue' ? 'No reviews awaiting moderation.' : 'No reviews found.'}</p>
             </div>
           ) : (
             reviews.map((review) => (
-              <div key={review.id} style={{ display: 'grid', gridTemplateColumns: '0.8fr 1.2fr 1.2fr 1fr 1fr 0.8fr', gap: '16px', alignItems: 'center', padding: '16px 22px', borderBottom: '1px solid #F1EAD9' }}>
+              <div key={review.id} style={{ display: 'grid', gridTemplateColumns: '0.7fr 1fr 1.1fr 0.9fr 0.9fr 0.9fr 1.2fr', gap: '14px', alignItems: 'center', padding: '16px 22px', borderBottom: '1px solid #F1EAD9' }}>
                 <div style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: '13px', color: '#8A8273' }}>#RV-{review.id.toString().padStart(4, '0')}</div>
                 <div style={{ fontSize: '13.5px', color: '#1F2A24', fontWeight: 600 }}>Product #{review.productId}</div>
                 <div>
                   <div style={{ fontSize: '13.5px', color: '#1F2A24', fontWeight: 600 }}>{review.reviewerFirstName} {review.reviewerLastName}</div>
+                  {review.comment && <div style={{ fontSize: '12px', color: '#8A8273', marginTop: '2px', maxWidth: '220px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{review.comment}</div>}
                 </div>
                 <div><StarDisplay rating={review.rating} /></div>
                 <div style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: '12.5px', color: '#5c5648' }}>{formatDate(review.createdAt)}</div>
-                <div style={{ textAlign: 'right' }}>
+                <div><StatusBadge status={review.status} /></div>
+                <div style={{ textAlign: 'right', display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
+                  {review.status === 'Flagged' && (
+                    <>
+                      <button
+                        onClick={() => approveMutation.mutate(review.id)}
+                        disabled={approveMutation.isPending}
+                        style={{ border: '1px solid #2F6F4F', background: '#E3EEE6', color: '#2F6F4F', borderRadius: '9px', padding: '8px 12px', fontFamily: "'Inter', sans-serif", fontSize: '12.5px', fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '5px' }}
+                      >
+                        <Check size={13} /> Approve
+                      </button>
+                      <button
+                        onClick={() => setRejectTarget(review)}
+                        style={{ border: '1px solid #d98a6e', background: '#FBEEE8', color: '#B14A2D', borderRadius: '9px', padding: '8px 12px', fontFamily: "'Inter', sans-serif", fontSize: '12.5px', fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '5px' }}
+                      >
+                        <X size={13} /> Reject
+                      </button>
+                    </>
+                  )}
                   <button
                     onClick={() => setSelectedReview(review)}
                     style={{ border: '1px solid #d98a6e', background: '#FBEEE8', color: '#B14A2D', borderRadius: '9px', padding: '8px 14px', fontFamily: "'Inter', sans-serif", fontSize: '12.5px', fontWeight: 600, cursor: 'pointer' }}

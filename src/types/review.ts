@@ -7,8 +7,10 @@ export type Review = {
   rating: number;
   comment: string | null;
   createdAt: string;
+  status: string;
+  moderationReason: string | null;
+  moderatedAt: string | null;
 };
-
 export type ProductReviews = {
   productId: number;
   averageRating: number;
