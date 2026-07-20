@@ -246,6 +246,7 @@ function AdminReviewsPage() {
                 <div>
                   <div style={{ fontSize: '13.5px', color: '#1F2A24', fontWeight: 600 }}>{review.reviewerFirstName} {review.reviewerLastName}</div>
                   {review.comment && <div style={{ fontSize: '12px', color: '#8A8273', marginTop: '2px', maxWidth: '220px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{review.comment}</div>}
+                  {review.moderationReason && <div style={{ fontSize: '11px', color: '#B14A2D', marginTop: '4px' }}>{review.moderationReason}{review.moderationScore != null ? ' (' + Math.round(review.moderationScore * 100) + '% confidence)' : ''}</div>}
                 </div>
                 <div><StarDisplay rating={review.rating} /></div>
                 <div style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: '12.5px', color: '#5c5648' }}>{formatDate(review.createdAt)}</div>

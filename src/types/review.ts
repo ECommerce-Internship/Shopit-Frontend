@@ -1,4 +1,4 @@
-export type Review = {
+﻿export type Review = {
   id: number;
   productId: number;
   userId: number;
@@ -10,6 +10,7 @@ export type Review = {
   status: string;
   moderationReason: string | null;
   moderatedAt: string | null;
+  moderationScore: number | null;
 };
 export type ProductReviews = {
   productId: number;
