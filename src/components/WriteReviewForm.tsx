@@ -1,6 +1,6 @@
 ﻿import { useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { Loader2, Clock } from 'lucide-react';
+import { Loader2, Clock, CheckCircle2 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { submitReview } from '../api/reviewsApi';
 
@@ -51,16 +51,16 @@ function WriteReviewForm({ productId }: { productId: number }) {
   const queryClient = useQueryClient();
   const [rating, setRating] = useState(0);
   const [comment, setComment] = useState('');
-  const [justSubmitted, setJustSubmitted] = useState(false);
+  const [submittedStatus, setSubmittedStatus] = useState<string | null>(null);
   const MAX_CHARS = 500;
 
   const submitMutation = useMutation({
     mutationFn: () => submitReview(productId, rating, comment),
-    onSuccess: () => {
+    onSuccess: (created) => {
       queryClient.invalidateQueries({ queryKey: ['reviews', String(productId)] });
       setRating(0);
       setComment('');
-      setJustSubmitted(true);
+      setSubmittedStatus(created.status);
       toast.success('Review submitted!');
     },
     onError: (error: unknown) => {
@@ -70,7 +70,36 @@ function WriteReviewForm({ productId }: { productId: number }) {
     },
   });
 
-  if (justSubmitted) {
+  if (submittedStatus === 'Approved') {
+    return (
+      <div
+        style={{
+          padding: '28px',
+          borderRadius: '16px',
+          backgroundColor: '#F0F6F2',
+          border: '1px solid #cfe2d5',
+          marginTop: '24px',
+          display: 'flex',
+          alignItems: 'flex-start',
+          gap: '14px',
+        }}
+      >
+        <div style={{ width: '36px', height: '36px', flexShrink: 0, borderRadius: '50%', backgroundColor: '#E3EEE6', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <CheckCircle2 size={18} color="#2F6F4F" />
+        </div>
+        <div>
+          <h3 style={{ fontFamily: "'Fraunces', serif", fontWeight: 600, fontSize: '18px', color: '#1F2A24', margin: '0 0 6px' }}>
+            Your review is live
+          </h3>
+          <p style={{ fontFamily: "'Inter', sans-serif", fontSize: '13.5px', color: '#5c5648', margin: 0, lineHeight: 1.5 }}>
+            Thanks for sharing your feedback — it's now visible on this product's page.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  if (submittedStatus) {
     return (
       <div
         style={{
