@@ -9,6 +9,7 @@
   createdAt: string;
   status: string;
   moderationReason: string | null;
+  moderationCategory: string | null;
   moderatedAt: string | null;
   moderationScore: number | null;
 };

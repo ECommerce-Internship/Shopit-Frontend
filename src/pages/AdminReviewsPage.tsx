@@ -3,8 +3,8 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Loader2, Check, X } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { AdminTabs } from '../components/AdminTabs';
-import axiosInstance from '../api/axiosInstance';
-import { adminDeleteReview, fetchModerationQueue, approveReview, rejectReview } from '../api/reviewsApi';
+import { adminDeleteReview, approveReview, rejectReview, getAllReviews, fetchModerationQueue, type ReviewFilters } from '../api/reviewsApi';
+import { fetchStores } from '../api/storesApi';
 import type { Review } from '../types/review';
 
 const labelMono = {
@@ -14,6 +14,20 @@ const labelMono = {
   textTransform: 'uppercase' as const,
   color: '#8A8273',
 };
+
+const selectStyle = {
+  border: '1px solid #E4DCC9',
+  background: '#fff',
+  color: '#1F2A24',
+  borderRadius: '9px',
+  padding: '9px 12px',
+  fontFamily: "'Inter', sans-serif",
+  fontSize: '12.5px',
+  cursor: 'pointer',
+};
+
+const CATEGORIES = ['genuine', 'spam', 'fake_promotional', 'toxic', 'incoherent', 'off_topic'];
+const STATUSES = ['Pending', 'Approved', 'Flagged', 'Rejected'];
 
 function formatDate(dateString: string): string {
   return new Date(dateString).toLocaleDateString('en-US', {
@@ -106,28 +120,30 @@ function RejectModal({ review, onConfirm, onCancel, isPending }: {
   );
 }
 
-type AllReviewsResponse = {
-  reviews: Review[];
-  totalCount: number;
-};
-
-async function fetchAllReviews(page: number): Promise<AllReviewsResponse> {
-  const response = await axiosInstance.get<AllReviewsResponse>('/api/v1/reviews', {
-    params: { PageNumber: page, PageSize: 10 },
-  });
-  return response.data;
-}
-
 function AdminReviewsPage() {
   const queryClient = useQueryClient();
   const [page, setPage] = useState(1);
   const [view, setView] = useState<'all' | 'queue'>('all');
+  const [statusFilter, setStatusFilter] = useState('');
+  const [storeFilter, setStoreFilter] = useState('');
+  const [categoryFilter, setCategoryFilter] = useState('');
   const [selectedReview, setSelectedReview] = useState<Review | null>(null);
   const [rejectTarget, setRejectTarget] = useState<Review | null>(null);
 
+  const { data: stores = [] } = useQuery({
+    queryKey: ['admin-stores-approved'],
+    queryFn: fetchStores,
+  });
+
+  const filters: ReviewFilters = {
+    status: statusFilter || undefined,
+    storeId: storeFilter ? Number(storeFilter) : undefined,
+    category: categoryFilter || undefined,
+  };
+
   const { data, isLoading } = useQuery({
-    queryKey: view === 'all' ? ['admin-reviews', page] : ['moderation-queue', page],
-    queryFn: () => (view === 'all' ? fetchAllReviews(page) : fetchModerationQueue(page)),
+    queryKey: [view === 'all' ? 'admin-reviews' : 'moderation-queue', page, statusFilter, storeFilter, categoryFilter],
+    queryFn: () => (view === 'all' ? getAllReviews(page, 10, filters) : fetchModerationQueue(page, 10, filters)),
   });
 
   const deleteMutation = useMutation({
@@ -196,7 +212,7 @@ function AdminReviewsPage() {
         <div style={{ flex: 1, minWidth: 0 }}>
 
         {/* Header */}
-        <div style={{ marginBottom: '8px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <div style={{ marginBottom: '20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '12px' }}>
           <div>
             <div style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: '11px', letterSpacing: '0.12em', textTransform: 'uppercase', color: '#8A8273', marginBottom: '8px' }}>Shopit Admin</div>
             <h1 style={{ fontFamily: "'Fraunces', serif", fontWeight: 600, fontSize: '34px', lineHeight: 1, margin: 0 }}>Reviews</h1>
@@ -215,6 +231,24 @@ function AdminReviewsPage() {
               Moderation Queue
             </button>
           </div>
+        </div>
+
+        {/* Filters */}
+        <div style={{ display: 'flex', gap: '10px', marginBottom: '16px', flexWrap: 'wrap' }}>
+          {view === 'all' && (
+            <select value={statusFilter} onChange={(e) => { setStatusFilter(e.target.value); setPage(1); }} style={selectStyle}>
+              <option value="">All statuses</option>
+              {STATUSES.map((s) => <option key={s} value={s}>{s}</option>)}
+            </select>
+          )}
+          <select value={storeFilter} onChange={(e) => { setStoreFilter(e.target.value); setPage(1); }} style={selectStyle}>
+            <option value="">All stores</option>
+            {stores.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
+          </select>
+          <select value={categoryFilter} onChange={(e) => { setCategoryFilter(e.target.value); setPage(1); }} style={selectStyle}>
+            <option value="">All categories</option>
+            {CATEGORIES.map((c) => <option key={c} value={c}>{c}</option>)}
+          </select>
         </div>
 
         {/* Table */}
