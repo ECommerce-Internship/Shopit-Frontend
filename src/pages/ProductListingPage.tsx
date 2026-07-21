@@ -1,10 +1,14 @@
+import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
+import { LayoutGrid, List } from 'lucide-react';
 import { fetchCategories, fetchProducts } from '../api/productsApi';
 import { useProductFilters } from '../hooks/useProductFilters';
-import { ProductCard } from '../components/ProductCard';
+import { ProductCard, type ProductView } from '../components/ProductCard';
 import { ProductCardSkeleton } from '../components/ProductCardSkeleton';
 import { Pagination } from '../components/Pagination';
 import type { SortBy, SortOrder } from '../types/product';
+
+const VIEW_STORAGE_KEY = 'shopit-products-view';
 
 const SORT_OPTIONS: Array<{ value: string; sortBy: SortBy; sortOrder: SortOrder; label: string }> = [
   { value: 'name-asc', sortBy: 'name', sortOrder: 'asc', label: 'Name A-Z' },
@@ -31,6 +35,15 @@ const inputStyle = {
 function ProductListingPage() {
   const { filters, debouncedSearch, setSearch, setCategoryId, setMinPrice, setMaxPrice, setSort, setPage, resetFilters } =
     useProductFilters();
+
+  const [view, setView] = useState<ProductView>(() =>
+    localStorage.getItem(VIEW_STORAGE_KEY) === 'list' ? 'list' : 'grid',
+  );
+
+  function changeView(next: ProductView) {
+    setView(next);
+    localStorage.setItem(VIEW_STORAGE_KEY, next);
+  }
 
   const queryFilters = { ...filters, search: debouncedSearch };
 
@@ -144,6 +157,29 @@ function ProductListingPage() {
               ))}
             </select>
           </div>
+
+          <div className="flex flex-col gap-1 ml-auto">
+            <label style={labelText}>View</label>
+            <div className="flex rounded-md overflow-hidden" style={{ border: '1px solid #E4DCC9' }}>
+              {(['grid', 'list'] as const).map((v) => (
+                <button
+                  key={v}
+                  type="button"
+                  onClick={() => changeView(v)}
+                  aria-label={v === 'grid' ? 'Grid view' : 'List view'}
+                  aria-pressed={view === v}
+                  className="px-3 py-2.5"
+                  style={{
+                    backgroundColor: view === v ? '#2F6F4F' : '#FFFFFF',
+                    color: view === v ? '#FFFFFF' : '#8A8273',
+                    transition: 'background-color 0.2s ease, color 0.2s ease',
+                  }}
+                >
+                  {v === 'grid' ? <LayoutGrid size={16} /> : <List size={16} />}
+                </button>
+              ))}
+            </div>
+          </div>
         </div>
 
         {/* Grid / states */}
@@ -159,9 +195,15 @@ function ProductListingPage() {
             </button>
           </div>
         ) : isLoading ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-            {Array.from({ length: 12 }).map((_, index) => (
-              <ProductCardSkeleton key={index} />
+          <div
+            className={
+              view === 'grid'
+                ? 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6'
+                : 'flex flex-col gap-4'
+            }
+          >
+            {Array.from({ length: view === 'grid' ? 12 : 6 }).map((_, index) => (
+              <ProductCardSkeleton key={index} view={view} />
             ))}
           </div>
         ) : products.length === 0 ? (
@@ -177,9 +219,16 @@ function ProductListingPage() {
           </div>
         ) : (
           <>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            <div
+              key={view}
+              className={`view-swap ${
+                view === 'grid'
+                  ? 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6'
+                  : 'flex flex-col gap-4'
+              }`}
+            >
               {products.map((product) => (
-                <ProductCard key={product.id} product={product} />
+                <ProductCard key={product.id} product={product} view={view} />
               ))}
             </div>
             <Pagination
