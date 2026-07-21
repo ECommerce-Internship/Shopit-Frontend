@@ -1,7 +1,7 @@
-import { useState } from 'react';
+﻿import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { useQuery, useMutation } from '@tanstack/react-query';
-import { ArrowLeft, Star, Loader2 } from 'lucide-react';
+import { ArrowLeft, Star, Loader2, Sparkles, CheckCircle2 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { fetchProductById } from '../api/productsApi';
 import { fetchProductReviews } from '../api/reviewsApi';
@@ -9,6 +9,7 @@ import { addCartItem } from '../api/cartApi';
 import { useCart } from '../context/CartContext';
 import WriteReviewForm from '../components/WriteReviewForm';
 import { useAuth } from '../context/AuthContext';
+import { Skeleton } from '../components/Skeleton';
 
 
 const inkText = { color: '#1F2A24', fontFamily: "'Inter', sans-serif" };
@@ -44,7 +45,6 @@ function getStockBadge(stockQuantity: number): { label: string; bg: string; text
 }
 
 function StarRating({ rating }: { rating: number }) {
-  // Round to nearest 0.5, then render 5 stars: filled, half-filled (via fill opacity trick), or empty.
   const rounded = Math.round(rating * 2) / 2;
   const stars = [1, 2, 3, 4, 5];
 
@@ -105,10 +105,31 @@ function ProductDetailPage() {
     },
   });
 
+  useEffect(() => {
+    if (!product) return;
+    document.title = product.seoTitle || product.name;
+    const metaTag = document.querySelector('meta[name="description"]');
+    if (metaTag && product.metaDescription) {
+      metaTag.setAttribute('content', product.metaDescription);
+    }
+  }, [product]);
+
   if (isProductLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: '#FBF7F0' }}>
-        <p style={mutedText}>Loading product…</p>
+      <div className="min-h-screen" style={{ backgroundColor: '#FBF7F0' }}>
+        <div className="max-w-5xl mx-auto px-6 py-10">
+          <Skeleton className="h-4 w-32 mb-8" />
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
+            <Skeleton className="aspect-square rounded-lg" />
+            <div className="flex flex-col gap-4">
+              <Skeleton className="h-9 w-3/4" />
+              <Skeleton className="h-4 w-1/3" />
+              <Skeleton className="h-9 w-1/4" />
+              <Skeleton className="h-6 w-32 rounded-full" />
+              <Skeleton className="h-12 w-40 rounded-md mt-2" />
+            </div>
+          </div>
+        </div>
       </div>
     );
   }
@@ -126,8 +147,12 @@ function ProductDetailPage() {
 
   const stockBadge = getStockBadge(product.stockQuantity);
   const reviews = reviewsData?.reviews ?? [];
-  const pageTitle = product.name; // seoTitle not yet returned by backend; falls back to name.
-  const description = product.description; // AI-generated description not yet returned by backend; falls back to plain description (or nothing).
+  const hasAiContent = Boolean(
+    product.description ||
+    (product.features && product.features.length > 0) ||
+    product.seoTitle ||
+    product.metaDescription
+  );
 
   return (
     <div className="min-h-screen" style={{ backgroundColor: '#FBF7F0' }}>
@@ -170,10 +195,10 @@ function ProductDetailPage() {
               className="text-3xl"
               style={{ color: '#1F2A24', fontFamily: "'Fraunces', serif", fontWeight: 500 }}
             >
-              {pageTitle}
+              {product.name}
             </h1>
 
-            
+
             {product.storeName && product.storeSlug &&(
               <Link
                 to={`/stores/${product.storeSlug}`}
@@ -215,25 +240,39 @@ function ProductDetailPage() {
               {product.stockQuantity === 0 ? 'Out of Stock' : 'Add to Cart'}
             </button>
 
-            {description && (
-              <div className="mt-4">
+            <div className="mt-4">
+              <div className="flex items-center gap-2 mb-1">
                 <p style={labelMono}>Description</p>
-                <p className="text-sm mt-1" style={inkText}>{description}</p>
+                {hasAiContent && (
+                  <span
+                    className="inline-flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-full"
+                    style={{ backgroundColor: '#F0ECE2', color: '#8A8273', fontFamily: "'IBM Plex Mono', monospace" }}
+                  >
+                    <Sparkles size={10} />
+                    AI-enhanced
+                  </span>
+                )}
+              </div>
+              {product.description ? (
+                <p className="text-sm mt-1 whitespace-pre-line" style={inkText}>{product.description}</p>
+              ) : (
+                <p className="text-sm mt-1" style={mutedText}>Product details coming soon.</p>
+              )}
+            </div>
+
+            {product.features && product.features.length > 0 && (
+              <div className="mt-2">
+                <p style={labelMono}>Key Features</p>
+                <ul className="flex flex-col gap-1 text-sm mt-1" style={inkText}>
+                  {product.features.map((feature, index) => (
+                    <li key={index} className="flex items-start gap-2">
+                      <CheckCircle2 size={16} style={{ color: '#2F6F4F', flexShrink: 0, marginTop: 2 }} />
+                      <span>{feature}</span>
+                    </li>
+                  ))}
+                </ul>
               </div>
             )}
-
-            {/* Features — only renders if backend ever returns a features array */}
-            {Array.isArray((product as { features?: string[] }).features) &&
-              (product as { features?: string[] }).features!.length > 0 && (
-                <div className="mt-2">
-                  <p style={labelMono}>Key Features</p>
-                  <ul className="list-disc list-inside text-sm mt-1" style={inkText}>
-                    {(product as { features?: string[] }).features!.map((feature, index) => (
-                      <li key={index}>{feature}</li>
-                    ))}
-                  </ul>
-                </div>
-              )}
           </div>
         </div>
 

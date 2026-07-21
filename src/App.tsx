@@ -3,6 +3,7 @@ import { Navbar } from './components/Navbar';
 import LandingPage from './pages/LandingPage';
 import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
+import ForgotPasswordPage from './pages/ForgotPasswordPage';
 import ProductListingPage from './pages/ProductListingPage';
 import ProductDetailPage from './pages/ProductDetailPage';
 import GoogleCallbackPage from './pages/GoogleCallbackPage';
@@ -31,13 +32,14 @@ import AdminInventoryPage from './pages/AdminInventoryPage';
 import AdminDashboardPage from './pages/AdminDashboardPage';
 import AdminStoresPage from './pages/AdminStoresPage';
 import { ChatButton } from './components/ChatButton';
+import { ErrorBoundary } from './components/ErrorBoundary';
 import { useAuth } from './context/AuthContext';
 import SellerDashboard from './pages/SellerDashboard';
 
 
 
 
-const HIDDEN_NAVBAR_PATHS = ['/', '/login', '/register', '/auth/google/callback'];
+const HIDDEN_NAVBAR_PATHS = ['/', '/login', '/register', '/forgot-password', '/auth/google/callback'];
 
 function App() {
   const location = useLocation();
@@ -48,10 +50,12 @@ function App() {
     <>
       {showNavbar && <Navbar />}
       {user && <ChatButton />}
-      <Routes>
+      <ErrorBoundary key={location.pathname}>
+        <Routes>
         <Route path="/" element={<LandingPage />} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
+        <Route path="/forgot-password" element={<ForgotPasswordPage />} />
         <Route path="/auth/google/callback" element={<GoogleCallbackPage />} />
         <Route path="/sell" element={<SellerRegisterPage />} />
         <Route path="/stores/:slug" element={<StorefrontPage />} />
@@ -86,6 +90,7 @@ function App() {
           </Route>
         </Route>
       </Routes>
+      </ErrorBoundary>
     </>
   );
 }

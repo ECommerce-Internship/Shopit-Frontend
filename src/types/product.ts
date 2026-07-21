@@ -1,4 +1,4 @@
-export type Product = {
+﻿export type Product = {
   id: number;
   name: string;
   description: string | null;
@@ -14,6 +14,9 @@ export type Product = {
   storeId: number;
   storeName: string;
   storeSlug: string;
+  features?: string[] | null;
+  seoTitle?: string | null;
+  metaDescription?: string | null;
 };
 
 export type Category = {
@@ -88,6 +91,9 @@ export type UpdateProductRequest = {
   price: number;
   sku: string;
   imageUrl?: string | null;
+  seoTitle?: string | null;
+  metaDescription?: string | null;
+  features?: string[] | null;
   categoryId: number;
   stockQuantity: number;
 };

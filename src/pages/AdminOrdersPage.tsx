@@ -3,6 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Loader2, ChevronDown, ChevronRight } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { AdminTabs } from '../components/AdminTabs';
+import { SkeletonTableRow } from '../components/Skeleton';
 import {
   fetchAdminOrders,
   updateStoreOrderStatus,
@@ -148,8 +149,8 @@ function AdminOrdersPage() {
         </div>
 
         {/* Table */}
-        <div style={{ background: '#fff', border: '1px solid #E4DCC9', borderRadius: '16px', overflow: 'hidden' }}>
-          <div style={{ display: 'grid', gridTemplateColumns: GRID, gap: '14px', padding: '13px 22px', background: '#FBF7F0', borderBottom: '1px solid #E4DCC9', ...labelMono }}>
+        <div style={{ background: '#fff', border: '1px solid #E4DCC9', borderRadius: '16px', overflowX: 'auto' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: GRID, gap: '14px', padding: '13px 22px', background: '#FBF7F0', borderBottom: '1px solid #E4DCC9', minWidth: '900px', ...labelMono }}>
             <div />
             <div>Order #</div>
             <div>Customer</div>
@@ -161,9 +162,9 @@ function AdminOrdersPage() {
           </div>
 
           {isLoading ? (
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '64px' }}>
-              <Loader2 size={26} className="animate-spin" color="#2F6F4F" />
-            </div>
+            Array.from({ length: 8 }).map((_, i) => (
+              <SkeletonTableRow key={i} gridTemplateColumns={GRID} cellCount={8} />
+            ))
           ) : orders.length === 0 ? (
             <div style={{ padding: '56px', textAlign: 'center', color: '#8A8273', fontSize: '14px' }}>No orders found.</div>
           ) : (
@@ -173,7 +174,7 @@ function AdminOrdersPage() {
                 <div key={order.id}>
                   <div
                     onClick={() => setExpanded(isOpen ? null : order.id)}
-                    style={{ display: 'grid', gridTemplateColumns: GRID, gap: '14px', alignItems: 'center', padding: '16px 22px', borderBottom: '1px solid #F1EAD9', cursor: 'pointer' }}
+                    style={{ display: 'grid', gridTemplateColumns: GRID, gap: '14px', alignItems: 'center', padding: '16px 22px', borderBottom: '1px solid #F1EAD9', cursor: 'pointer', minWidth: '900px' }}
                   >
                     <div style={{ color: '#8A8273' }}>
                       {isOpen ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
