@@ -1,4 +1,4 @@
-import { useAuth } from '../context/AuthContext';
+﻿import { useAuth } from '../context/AuthContext';
 import { Link } from 'react-router-dom';
 
 function Seller() {
@@ -13,10 +13,12 @@ function Seller() {
           Welcome, {user?.firstName} {user?.lastName}
           <br />
           <Link to="/seller/stores">View my stores</Link>
-          {' · '}
+          {' Â· '}
           <Link to="/seller/products">Manage products</Link>
-          {' · '}
+          {' Â· '}
           <Link to="/seller/orders">Manage orders</Link>
+          {' · '}
+          <Link to="/seller/reviews">Flagged reviews</Link>
         </p>
         {!hasApprovedStore && (
           <div className="bg-yellow-50 border border-yellow-300 text-yellow-800 text-sm rounded p-3">

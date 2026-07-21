@@ -1,4 +1,4 @@
-import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
+﻿import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { Navbar } from './components/Navbar';
 import LandingPage from './pages/LandingPage';
 import LoginPage from './pages/LoginPage';
@@ -16,6 +16,7 @@ import MyStoresPage from './pages/MyStoresPage';
 import SellerProductsPage from './pages/SellerProductsPage';
 import SellerProductFormPage from './pages/SellerProductFormPage';
 import SellerOrdersPage from './pages/SellerOrdersPage';
+import SellerFlaggedReviewsPage from './pages/SellerFlaggedReviewsPage';
 import { ProtectedRoute } from './components/ProtectedRoute';
 import { AdminRoute } from './components/AdminRoute';
 import { SellerRoute } from './components/SellerRoute';
@@ -87,6 +88,7 @@ function App() {
             <Route path="/seller/products/new" element={<SellerProductFormPage />} />
             <Route path="/seller/products/:id/edit" element={<SellerProductFormPage />} />
             <Route path="/seller/orders" element={<SellerOrdersPage />} />
+            <Route path="/seller/reviews" element={<SellerFlaggedReviewsPage />} />
           </Route>
         </Route>
       </Routes>
