@@ -5,7 +5,6 @@ import { SkeletonTableRow } from '../components/Skeleton';
 import { Loader2 } from 'lucide-react';
 import { GenerateContentDrawer } from '../components/GenerateContentDrawer';
 import { generateProductContent } from '../api/aiApi';
-import type { ProductContentResponse } from '../api/aiApi';
 import toast from 'react-hot-toast';
 import {
   createProduct,
@@ -68,6 +67,7 @@ type FormState = {
   seoTitle: string;
   metaDescription: string;
   features: string[];
+  specs: string;
 };
 
 const emptyForm: FormState = {
@@ -82,6 +82,7 @@ const emptyForm: FormState = {
   seoTitle: '',
   metaDescription: '',
   features: [],
+  specs: '',
 };
 
 function StockBadge({ quantity }: { quantity: number }) {
@@ -205,6 +206,7 @@ function AdminProductsPage() {
       seoTitle: p.seoTitle ?? '',
       metaDescription: p.metaDescription ?? '',
       features: p.features ?? [],
+      specs: ''
     });
     setHasStoredImage(!!p.imageUrl);
     setEditOpen(true);
@@ -271,21 +273,33 @@ function AdminProductsPage() {
   };
 
   // â”€â”€ AI content generation (edit mode only â€” needs a persisted product id) â”€â”€
-  const generateMutation = useMutation({
-    mutationFn: (id: number) => generateProductContent(id),
-    onSuccess: (content) => {
-      setGenerated(content);
-      setForm((f) => ({ ...f, description: f.description.trim() ? f.description : content.description }));
-    },
-    onError: (err: unknown) => {
-      const status = (err as { response?: { status?: number } })?.response?.status;
-      toast.error(
-        status === 429
-          ? 'Too many requests â€” try again in a moment.'
-          : 'Could not generate content.'
-      );
-    },
-  });
+const generateMutation = useMutation({
+  mutationFn: () => {
+    const categoryName = categories.find(c => c.id === form.categoryId)?.name ?? '';
+    return generateProductContent({
+      productName: form.name,
+      category: categoryName,
+      specs: form.specs,
+    });
+  },
+  onSuccess: (content) => {
+    setGenerated(content);
+    setDrawerOpen(true);
+  },
+  onError: (err: unknown) => {
+    const status = (err as { response?: { status?: number } })?.response?.status;
+    toast.error(
+      status === 429
+        ? 'Too many requests — try again in a moment.'
+        : 'Could not generate content.'
+    );
+  },
+});
+
+const handleUseContent = (content: { description: string }) => {
+  setForm((f) => ({ ...f, description: content.description }));
+  setDrawerOpen(false);
+};
 
   const addFeature = (text: string) =>
     setForm((f) => ({
@@ -618,7 +632,7 @@ function AdminProductsPage() {
                       Generatingâ€¦
                     </button>
                   ) : (
-                    <button onClick={() => editId != null && generateMutation.mutate(editId)} style={{ fontFamily: "'Inter', sans-serif", fontSize: '12px', fontWeight: 500, color: '#2F6F4F', background: '#fff', border: '1px solid #2F6F4F', borderRadius: '8px', padding: '5px 11px', cursor: 'pointer' }}>âœ¨ Generate Content</button>
+                    <button onClick={() => editId != null && generateMutation.mutate()} style={{ fontFamily: "'Inter', sans-serif", fontSize: '12px', fontWeight: 500, color: '#2F6F4F', background: '#fff', border: '1px solid #2F6F4F', borderRadius: '8px', padding: '5px 11px', cursor: 'pointer' }}>âœ¨ Generate Content</button>
                   )
                 )}
               </div>
