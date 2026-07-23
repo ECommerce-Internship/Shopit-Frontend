@@ -8,9 +8,10 @@ type AuthLayoutProps = {
 export function AuthLayout({ eyebrow, children }: AuthLayoutProps) {
   return (
     <div className="min-h-screen flex" style={{ backgroundColor: '#FBF7F0' }}>
-      {/* Brand panel */}
+      {/* Brand panel — sticky and viewport-height so its content (logo, tagline)
+          stays put when the form side grows taller (e.g. seller registration). */}
       <div
-        className="hidden lg:flex lg:w-2/5 flex-col justify-between p-12 relative"
+        className="hidden lg:flex lg:w-2/5 flex-col justify-between p-12 relative lg:sticky lg:top-0 lg:h-screen"
         style={{
           backgroundColor: '#2F6F4F',
           backgroundImage:

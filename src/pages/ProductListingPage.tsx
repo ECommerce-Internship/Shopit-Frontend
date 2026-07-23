@@ -1,10 +1,15 @@
+import { useState, useEffect, useRef } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { fetchCategories, fetchProducts } from '../api/productsApi';
+import { LayoutGrid, List, Sparkles } from 'lucide-react';
+import { fetchCategories, fetchProducts, fetchSemanticProducts } from '../api/productsApi';
 import { useProductFilters } from '../hooks/useProductFilters';
-import { ProductCard } from '../components/ProductCard';
+import { ProductCard, type ProductView } from '../components/ProductCard';
 import { ProductCardSkeleton } from '../components/ProductCardSkeleton';
 import { Pagination } from '../components/Pagination';
-import type { SortBy, SortOrder } from '../types/product';
+import type { Product, SortBy, SortOrder } from '../types/product';
+import { Sparkles } from 'lucide-react';
+
+const VIEW_STORAGE_KEY = 'shopit-products-view';
 
 const SORT_OPTIONS: Array<{ value: string; sortBy: SortBy; sortOrder: SortOrder; label: string }> = [
   { value: 'name-asc', sortBy: 'name', sortOrder: 'asc', label: 'Name A-Z' },
@@ -29,17 +34,47 @@ const inputStyle = {
 };
 
 function ProductListingPage() {
-  const { filters, debouncedSearch, setSearch, setCategoryId, setMinPrice, setMaxPrice, setSort, setPage, resetFilters } =
+  const { filters, setCategoryId, setMinPrice, setMaxPrice, setSort, setPage, resetFilters } =
     useProductFilters();
+
+  const [searchValue, setSearchValue] = useState('');
+  const [debouncedSearch, setDebouncedSearch] = useState('');
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [view, setView] = useState<ProductView>(() =>
+    localStorage.getItem(VIEW_STORAGE_KEY) === 'list' ? 'list' : 'grid',
+  );
+
+  function changeView(next: ProductView) {
+    setView(next);
+    localStorage.setItem(VIEW_STORAGE_KEY, next);
+  }
 
   const queryFilters = { ...filters, search: debouncedSearch };
 
-  const { data, isLoading, isError, error } = useQuery({
+  useEffect(() => {
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    debounceRef.current = setTimeout(() => setDebouncedSearch(searchValue), 500);
+    return () => { if (debounceRef.current) clearTimeout(debounceRef.current); };
+  }, [searchValue]);
+
+  const isSearching = debouncedSearch.trim().length > 2;
+  const queryFilters = { ...filters, search: '' };
+
+  // Semantic search when user types
+  const semanticQuery = useQuery({
+    queryKey: ['semantic-search', debouncedSearch],
+    queryFn: () => fetchSemanticProducts(debouncedSearch, 20),
+    enabled: isSearching,
+  });
+
+  // All products when no search query
+  const allProductsQuery = useQuery({
     queryKey: ['products', queryFilters],
     queryFn: () => fetchProducts(queryFilters),
+    enabled: !isSearching,
     retry: (failureCount, err: unknown) => {
       const status = (err as { response?: { status?: number } })?.response?.status;
-      if (status && status >= 400 && status < 500) return false; // don't retry client errors (e.g. bad filter combo)
+      if (status && status >= 400 && status < 500) return false;
       return failureCount < 3;
     },
   });
@@ -56,11 +91,14 @@ function ProductListingPage() {
     if (option) setSort(option.sortBy, option.sortOrder);
   }
 
-  const products = data?.items ?? [];
+  const isLoading = isSearching ? semanticQuery.isLoading : allProductsQuery.isLoading;
+  const isError = isSearching ? semanticQuery.isError : allProductsQuery.isError;
 
-  const errorMessage =
-    (error as { response?: { data?: { detail?: string } } })?.response?.data?.detail ??
-    'Something went wrong loading products. Please try again.';
+  const products: Product[] = isSearching
+    ? (semanticQuery.data ?? [])
+    : (allProductsQuery.data?.items ?? []);
+
+  const showPagination = !isSearching && allProductsQuery.data;
 
   return (
     <div className="min-h-screen" style={{ backgroundColor: '#FBF7F0' }}>
@@ -74,61 +112,98 @@ function ProductListingPage() {
 
         {/* Filter bar */}
         <div className="flex flex-wrap gap-4 mb-8 items-end">
+          {/* Unified search box */}
           <div className="flex flex-col gap-1">
             <label style={labelText}>Search</label>
-            <input
-              type="text"
-              value={filters.search}
-              onChange={(e) => setSearch(e.target.value)}
-              placeholder="Search products..."
-              className="px-3 py-2 rounded-md text-sm min-w-[220px]"
-              style={inputStyle}
-            />
+            <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+              <input
+                type="text"
+                value={searchValue}
+                onChange={(e) => setSearchValue(e.target.value)}
+                placeholder="Search products..."
+                className="px-3 py-2 rounded-md text-sm min-w-[280px]"
+                style={{ ...inputStyle, paddingRight: '32px' }}
+              />
+              {isSearching && (
+                <div style={{ position: 'absolute', right: '10px', display: 'flex', alignItems: 'center' }}>
+                  <Sparkles size={14} color="#7B5EA7" />
+                </div>
+              )}
+            </div>
+            {isSearching && (
+              <span style={{ fontSize: '11px', color: '#7B5EA7', fontFamily: "'IBM Plex Mono', monospace" }}>
+                ✨ AI-powered results
+              </span>
+            )}
           </div>
 
-          <div className="flex flex-col gap-1">
-            <label style={labelText}>Category</label>
-            <select
-              value={filters.categoryId}
-              onChange={(e) => setCategoryId(e.target.value)}
-              className="px-3 py-2 rounded-md text-sm min-w-[160px]"
-              style={inputStyle}
-            >
-              <option value="">All Categories</option>
-              {categories?.map((category) => (
-                <option key={category.id} value={category.id}>
-                  {category.name}
-                </option>
-              ))}
-            </select>
-          </div>
+          {/* Category filter — hidden in semantic mode since results are ranked by relevance */}
+          {!isSearching && (
+            <div className="flex flex-col gap-1">
+              <label style={labelText}>Category</label>
+              <select
+                value={filters.categoryId}
+                onChange={(e) => setCategoryId(e.target.value)}
+                className="px-3 py-2 rounded-md text-sm min-w-[160px]"
+                style={inputStyle}
+              >
+                <option value="">All Categories</option>
+                {categories?.map((category) => (
+                  <option key={category.id} value={category.id}>
+                    {category.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
 
-          <div className="flex flex-col gap-1">
-            <label style={labelText}>Min Price</label>
-            <input
-              type="number"
-              min="0"
-              value={filters.minPrice}
-              onChange={(e) => setMinPrice(e.target.value)}
-              placeholder="0"
-              className="px-3 py-2 rounded-md text-sm w-24"
-              style={inputStyle}
-            />
-          </div>
+          {!isSearching && (
+            <div className="flex flex-col gap-1">
+              <label style={labelText}>Min Price</label>
+              <input
+                type="number"
+                min="0"
+                value={filters.minPrice}
+                onChange={(e) => setMinPrice(e.target.value)}
+                placeholder="0"
+                className="px-3 py-2 rounded-md text-sm w-24"
+                style={inputStyle}
+              />
+            </div>
+          )}
 
-          <div className="flex flex-col gap-1">
-            <label style={labelText}>Max Price</label>
-            <input
-              type="number"
-              min="0"
-              value={filters.maxPrice}
-              onChange={(e) => setMaxPrice(e.target.value)}
-              placeholder="Any"
-              className="px-3 py-2 rounded-md text-sm w-24"
-              style={inputStyle}
-            />
-          </div>
+          {!isSearching && (
+            <div className="flex flex-col gap-1">
+              <label style={labelText}>Max Price</label>
+              <input
+                type="number"
+                min="0"
+                value={filters.maxPrice}
+                onChange={(e) => setMaxPrice(e.target.value)}
+                placeholder="Any"
+                className="px-3 py-2 rounded-md text-sm w-24"
+                style={inputStyle}
+              />
+            </div>
+          )}
 
+          {!isSearching && (
+            <div className="flex flex-col gap-1">
+              <label style={labelText}>Sort By</label>
+              <select
+                value={currentSortValue}
+                onChange={(e) => handleSortChange(e.target.value)}
+                className="px-3 py-2 rounded-md text-sm min-w-[160px]"
+                style={inputStyle}
+              >
+                {SORT_OPTIONS.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
           <div className="flex flex-col gap-1">
             <label style={labelText}>Sort By</label>
             <select
@@ -144,12 +219,35 @@ function ProductListingPage() {
               ))}
             </select>
           </div>
+
+          <div className="flex flex-col gap-1 ml-auto">
+            <label style={labelText}>View</label>
+            <div className="flex rounded-md overflow-hidden" style={{ border: '1px solid #E4DCC9' }}>
+              {(['grid', 'list'] as const).map((v) => (
+                <button
+                  key={v}
+                  type="button"
+                  onClick={() => changeView(v)}
+                  aria-label={v === 'grid' ? 'Grid view' : 'List view'}
+                  aria-pressed={view === v}
+                  className="px-3 py-2.5"
+                  style={{
+                    backgroundColor: view === v ? '#2F6F4F' : '#FFFFFF',
+                    color: view === v ? '#FFFFFF' : '#8A8273',
+                    transition: 'background-color 0.2s ease, color 0.2s ease',
+                  }}
+                >
+                  {v === 'grid' ? <LayoutGrid size={16} /> : <List size={16} />}
+                </button>
+              ))}
+            </div>
+          </div>
         </div>
 
         {/* Grid / states */}
         {isError ? (
           <div className="flex flex-col items-center justify-center py-20 gap-4">
-            <p style={{ ...inkText, color: '#B14A2D' }}>{errorMessage}</p>
+            <p style={{ ...inkText, color: '#B14A2D' }}>Something went wrong. Please try again.</p>
             <button
               onClick={resetFilters}
               className="px-4 py-2 rounded-md text-sm"
@@ -159,34 +257,61 @@ function ProductListingPage() {
             </button>
           </div>
         ) : isLoading ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-            {Array.from({ length: 12 }).map((_, index) => (
-              <ProductCardSkeleton key={index} />
+          <div
+            className={
+              view === 'grid'
+                ? 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6'
+                : 'flex flex-col gap-4'
+            }
+          >
+            {Array.from({ length: view === 'grid' ? 12 : 6 }).map((_, index) => (
+              <ProductCardSkeleton key={index} view={view} />
             ))}
           </div>
         ) : products.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-20 gap-4">
-            <p style={{ ...inkText, color: '#8A8273' }}>No products found — try adjusting your filters</p>
-            <button
-              onClick={resetFilters}
-              className="px-4 py-2 rounded-md text-sm"
-              style={{ backgroundColor: '#2F6F4F', color: '#FFFFFF', fontFamily: "'Inter', sans-serif" }}
-            >
-              Reset
-            </button>
+            <p style={{ ...inkText, color: '#8A8273' }}>
+              {isSearching
+                ? 'No matching products found — try a different description'
+                : 'No products found — try adjusting your filters'}
+            </p>
+            {!isSearching && (
+              <button
+                onClick={resetFilters}
+                className="px-4 py-2 rounded-md text-sm"
+                style={{ backgroundColor: '#2F6F4F', color: '#FFFFFF', fontFamily: "'Inter', sans-serif" }}
+              >
+                Reset
+              </button>
+            )}
           </div>
         ) : (
           <>
+            {isSearching && (
+              <p style={{ ...labelText, marginBottom: '16px' }}>
+                {products.length} results · ranked by AI relevance
+              </p>
+            )}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            <div
+              key={view}
+              className={`view-swap ${
+                view === 'grid'
+                  ? 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6'
+                  : 'flex flex-col gap-4'
+              }`}
+            >
               {products.map((product) => (
-                <ProductCard key={product.id} product={product} />
+                <ProductCard key={product.id} product={product} view={view} />
               ))}
             </div>
-            <Pagination
-              currentPage={data?.pageNumber ?? 1}
-              totalPages={data?.totalPages ?? 1}
-              onPageChange={setPage}
-            />
+            {showPagination && (
+              <Pagination
+                currentPage={allProductsQuery.data?.pageNumber ?? 1}
+                totalPages={allProductsQuery.data?.totalPages ?? 1}
+                onPageChange={setPage}
+              />
+            )}
           </>
         )}
       </div>
