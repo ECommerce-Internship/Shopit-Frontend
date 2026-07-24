@@ -32,6 +32,9 @@ import AdminOrdersPage from './pages/AdminOrdersPage';
 import AdminInventoryPage from './pages/AdminInventoryPage';
 import AdminDashboardPage from './pages/AdminDashboardPage';
 import AdminStoresPage from './pages/AdminStoresPage';
+import AdminCouponsPage from './pages/AdminCouponsPage';
+import SellerCouponsPage from './pages/SellerCouponsPage';
+import { AppLayout } from './components/AppLayout';
 import { ChatButton } from './components/ChatButton';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { useAuth } from './context/AuthContext';
@@ -42,9 +45,18 @@ import SellerDashboard from './pages/SellerDashboard';
 
 const HIDDEN_NAVBAR_PATHS = ['/', '/login', '/register', '/forgot-password', '/auth/google/callback'];
 
+// Route prefixes rendered inside AppLayout (customer + seller). These own their
+// own full-height sidebar, so the global top navbar is hidden on them. Admin and
+// public pages (storefront, /sell) keep the top navbar.
+const SIDEBAR_LAYOUT_PREFIXES = ['/products', '/account', '/dashboard', '/cart', '/checkout', '/orders', '/seller'];
+
 function App() {
   const location = useLocation();
-  const showNavbar = !HIDDEN_NAVBAR_PATHS.includes(location.pathname);
+  const { pathname } = location;
+  const inSidebarLayout = SIDEBAR_LAYOUT_PREFIXES.some(
+    (p) => pathname === p || pathname.startsWith(`${p}/`),
+  );
+  const showNavbar = !HIDDEN_NAVBAR_PATHS.includes(pathname) && !inSidebarLayout;
   const { user } = useAuth();
 
   return (
@@ -61,15 +73,7 @@ function App() {
         <Route path="/sell" element={<SellerRegisterPage />} />
         <Route path="/stores/:slug" element={<StorefrontPage />} />
         <Route element={<ProtectedRoute />}>
-          <Route path="/products" element={<ProductListingPage />} />
-          <Route path="/products/:id" element={<ProductDetailPage />} />
-          <Route path="/account" element={<AccountPage />} />
-          <Route path="/dashboard" element={<Dashboard />} />
-          <Route path="/cart" element={<CartPage />} />
-          <Route path="/checkout" element={<CheckoutPage />} />
-          <Route path="/orders/:id" element={<OrderDetailPage />} />
-          <Route path="/orders/:id/confirmation" element={<OrderConfirmationPage />} />
-          <Route path="/orders" element={<MyOrdersPage />} />
+          {/* Admin keeps its own console (AdminTabs) and the top navbar. */}
           <Route element={<AdminRoute />}>
             <Route path="/admin" element={<Navigate to="/admin/dashboard" replace />} />
             <Route path="/admin/dashboard" element={<AdminDashboardPage />} />
@@ -78,17 +82,32 @@ function App() {
             <Route path="/admin/products" element={<AdminProductsPage />} />
             <Route path="/admin/categories" element={<AdminCategoriesPage />} />
             <Route path="/admin/stores" element={<AdminStoresPage />} />
+            <Route path="/admin/coupons" element={<AdminCouponsPage />} />
             <Route path="/admin/payments" element={<AdminPaymentsPage />} />
             <Route path="/admin/reviews" element={<AdminReviewsPage />} />
           </Route>
-          <Route element={<SellerRoute />}>
-            <Route path="/seller" element={<SellerDashboard />} />
-            <Route path="/seller/stores" element={<MyStoresPage />} />
-            <Route path="/seller/products" element={<SellerProductsPage />} />
-            <Route path="/seller/products/new" element={<SellerProductFormPage />} />
-            <Route path="/seller/products/:id/edit" element={<SellerProductFormPage />} />
-            <Route path="/seller/orders" element={<SellerOrdersPage />} />
-            <Route path="/seller/reviews" element={<SellerFlaggedReviewsPage />} />
+
+          {/* Customers and sellers share the full-height sidebar layout. */}
+          <Route element={<AppLayout />}>
+            <Route path="/products" element={<ProductListingPage />} />
+            <Route path="/products/:id" element={<ProductDetailPage />} />
+            <Route path="/account" element={<AccountPage />} />
+            <Route path="/dashboard" element={<Dashboard />} />
+            <Route path="/cart" element={<CartPage />} />
+            <Route path="/checkout" element={<CheckoutPage />} />
+            <Route path="/orders/:id" element={<OrderDetailPage />} />
+            <Route path="/orders/:id/confirmation" element={<OrderConfirmationPage />} />
+            <Route path="/orders" element={<MyOrdersPage />} />
+            <Route element={<SellerRoute />}>
+              <Route path="/seller" element={<SellerDashboard />} />
+              <Route path="/seller/stores" element={<MyStoresPage />} />
+              <Route path="/seller/products" element={<SellerProductsPage />} />
+              <Route path="/seller/products/new" element={<SellerProductFormPage />} />
+              <Route path="/seller/products/:id/edit" element={<SellerProductFormPage />} />
+              <Route path="/seller/orders" element={<SellerOrdersPage />} />
+              <Route path="/seller/coupons" element={<SellerCouponsPage />} />
+              <Route path="/seller/reviews" element={<SellerFlaggedReviewsPage />} />
+            </Route>
           </Route>
         </Route>
       </Routes>

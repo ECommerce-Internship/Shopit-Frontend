@@ -11,6 +11,7 @@ const TABS: { label: string; to?: string }[] = [
   { label: 'Products', to: '/admin/products' },
   { label: 'Categories', to: '/admin/categories' },
   { label: 'Stores', to: '/admin/stores' },
+  { label: 'Coupons', to: '/admin/coupons' },
   { label: 'Settings' },
 ];
 
