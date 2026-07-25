@@ -7,7 +7,6 @@ import { ProductCard, type ProductView } from '../components/ProductCard';
 import { ProductCardSkeleton } from '../components/ProductCardSkeleton';
 import { Pagination } from '../components/Pagination';
 import type { Product, SortBy, SortOrder } from '../types/product';
-import { Sparkles } from 'lucide-react';
 
 const VIEW_STORAGE_KEY = 'shopit-products-view';
 
@@ -48,8 +47,6 @@ function ProductListingPage() {
     setView(next);
     localStorage.setItem(VIEW_STORAGE_KEY, next);
   }
-
-  const queryFilters = { ...filters, search: debouncedSearch };
 
   useEffect(() => {
     if (debounceRef.current) clearTimeout(debounceRef.current);
@@ -292,7 +289,6 @@ function ProductListingPage() {
                 {products.length} results · ranked by AI relevance
               </p>
             )}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
             <div
               key={view}
               className={`view-swap ${

@@ -9,6 +9,7 @@ import { addCartItem } from '../api/cartApi';
 import { useCart } from '../context/CartContext';
 import WriteReviewForm from '../components/WriteReviewForm';
 import { useAuth } from '../context/AuthContext';
+import { useProductPageAnalytics } from '../hooks/useProductPageAnalytics';
 import { Skeleton } from '../components/Skeleton';
 
 
@@ -92,6 +93,9 @@ function ProductDetailPage() {
     queryFn: () => fetchProductReviews(id!),
     enabled: !!id,
   });
+
+  // Record a view + measure dwell time once we know the product is real.
+  useProductPageAnalytics(product?.id);
 
   const addToCartMutation = useMutation({
     mutationFn: () => addCartItem(Number(id), quantity),
