@@ -9,6 +9,7 @@ import {
   fetchSellerRevenue,
   fetchSellerTopProducts,
 } from '../api/dashboardApi';
+import { ProductEngagementPanel } from '../components/ProductEngagementPanel';
 
 function formatPrice(price: number): string {
   return '$' + price.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
@@ -252,6 +253,9 @@ function SellerDashboard() {
           ))
         )}
       </div>
+
+      {/* Product engagement — clicks & time spent for this store's products */}
+      <ProductEngagementPanel storeId={activeStore?.id} />
     </div>
   );
 }

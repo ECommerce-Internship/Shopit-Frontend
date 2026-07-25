@@ -5,7 +5,7 @@ import toast from 'react-hot-toast';
 import axiosInstance from '../api/axiosInstance';
 import { useAuth, getRedirectPathForRole } from '../context/AuthContext';
 import { AuthLayout } from '../components/AuthLayout';
-import { AuthModeSwitch, authAccent, type AuthMode } from '../components/AuthModeSwitch';
+import { authAccent } from '../components/AuthModeSwitch';
 
 const inputStyle = {
   fontFamily: "'Inter', sans-serif",
@@ -21,13 +21,12 @@ function LoginPage() {
   const [passwordError, setPasswordError] = useState<string | null>(null);
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
-  // Presentation-only: the login endpoint is role-agnostic (the role comes
-  // back in the token), so the switch just themes the form and swaps links.
-  const [mode, setMode] = useState<AuthMode>('customer');
   const { login } = useAuth();
   const navigate = useNavigate();
 
-  const accent = authAccent(mode);
+  // Login is role-agnostic (the role comes back in the token), so there's no
+  // customer/seller choice here — the form just uses the default accent.
+  const accent = authAccent('customer');
 
   const validate = () => {
     let valid = true;
@@ -72,9 +71,7 @@ function LoginPage() {
   };
 
   return (
-    <AuthLayout eyebrow={mode === 'seller' ? 'Sign in · Seller' : 'Sign in · Customer'}>
-      <AuthModeSwitch mode={mode} onChange={setMode} />
-
+    <AuthLayout eyebrow="Sign in">
       <form onSubmit={handleSubmit} className="flex flex-col gap-4">
         <div className="flex flex-col gap-1">
           <label
@@ -155,7 +152,7 @@ function LoginPage() {
             transition: 'background-color 0.3s ease, opacity 0.15s ease',
           }}
         >
-          {loading ? 'Signing in...' : mode === 'seller' ? 'Sign in to your store' : 'Sign in'}
+          {loading ? 'Signing in...' : 'Sign in'}
         </button>
       </form>
 

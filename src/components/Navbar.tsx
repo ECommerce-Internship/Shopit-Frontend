@@ -42,21 +42,10 @@ export function Navbar() {
           <Link to="/products" className="text-sm" style={linkStyle}>
             Products
           </Link>
-          <Link to="/sell" className="text-sm font-medium" style={sellerLinkStyle}>
-            Sell on Shopit
-          </Link>
-          {user?.role === 'Seller' && (
-            <>
-              <Link to="/seller/products" className="text-sm" style={sellerLinkStyle}>
-                My Products
-              </Link>
-              <Link to="/seller/orders" className="text-sm" style={sellerLinkStyle}>
-                Orders
-              </Link>
-              <Link to="/seller/stores" className="text-sm" style={sellerLinkStyle}>
-                My Stores
-              </Link>
-            </>
+          {user?.role !== 'Seller' && (
+            <Link to="/sell" className="text-sm font-medium" style={sellerLinkStyle}>
+              Sell on Shopit
+            </Link>
           )}
         </div>
 
@@ -180,41 +169,15 @@ export function Navbar() {
           >
             Products
           </Link>
-          <Link
-            to="/sell"
-            onClick={() => setMobileNavOpen(false)}
-            className="text-sm font-medium px-6 py-3"
-            style={{ ...sellerLinkStyle, borderBottom: '1px solid #F0ECE2' }}
-          >
-            Sell on Shopit
-          </Link>
-          {user?.role === 'Seller' && (
-            <>
-              <Link
-                to="/seller/products"
-                onClick={() => setMobileNavOpen(false)}
-                className="text-sm px-6 py-3"
-                style={{ ...sellerLinkStyle, borderBottom: '1px solid #F0ECE2' }}
-              >
-                My Products
-              </Link>
-              <Link
-                to="/seller/orders"
-                onClick={() => setMobileNavOpen(false)}
-                className="text-sm px-6 py-3"
-                style={{ ...sellerLinkStyle, borderBottom: '1px solid #F0ECE2' }}
-              >
-                Orders
-              </Link>
-              <Link
-                to="/seller/stores"
-                onClick={() => setMobileNavOpen(false)}
-                className="text-sm px-6 py-3"
-                style={{ ...sellerLinkStyle, borderBottom: '1px solid #F0ECE2' }}
-              >
-                My Stores
-              </Link>
-            </>
+          {user?.role !== 'Seller' && (
+            <Link
+              to="/sell"
+              onClick={() => setMobileNavOpen(false)}
+              className="text-sm font-medium px-6 py-3"
+              style={{ ...sellerLinkStyle, borderBottom: '1px solid #F0ECE2' }}
+            >
+              Sell on Shopit
+            </Link>
           )}
           {!user && (
             <Link
