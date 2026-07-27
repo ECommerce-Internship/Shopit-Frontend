@@ -1,8 +1,10 @@
 import { useState, useEffect, useRef } from 'react';
+import { motion, useReducedMotion } from 'motion/react';
 import { useQuery } from '@tanstack/react-query';
 import { LayoutGrid, List, Sparkles } from 'lucide-react';
 import { fetchCategories, fetchProducts, fetchSemanticProducts } from '../api/productsApi';
 import { useProductFilters } from '../hooks/useProductFilters';
+import { staggerContainer } from '../lib/motion';
 import { ProductCard, type ProductView } from '../components/ProductCard';
 import { ProductCardSkeleton } from '../components/ProductCardSkeleton';
 import { Pagination } from '../components/Pagination';
@@ -87,6 +89,8 @@ function ProductListingPage() {
     const option = SORT_OPTIONS.find((opt) => opt.value === value);
     if (option) setSort(option.sortBy, option.sortOrder);
   }
+
+  const prefersReduced = useReducedMotion();
 
   const isLoading = isSearching ? semanticQuery.isLoading : allProductsQuery.isLoading;
   const isError = isSearching ? semanticQuery.isError : allProductsQuery.isError;
@@ -201,21 +205,6 @@ function ProductListingPage() {
               </select>
             </div>
           )}
-          <div className="flex flex-col gap-1">
-            <label style={labelText}>Sort By</label>
-            <select
-              value={currentSortValue}
-              onChange={(e) => handleSortChange(e.target.value)}
-              className="px-3 py-2 rounded-md text-sm min-w-[160px]"
-              style={inputStyle}
-            >
-              {SORT_OPTIONS.map((option) => (
-                <option key={option.value} value={option.value}>
-                  {option.label}
-                </option>
-              ))}
-            </select>
-          </div>
 
           <div className="flex flex-col gap-1 ml-auto">
             <label style={labelText}>View</label>
@@ -289,18 +278,21 @@ function ProductListingPage() {
                 {products.length} results · ranked by AI relevance
               </p>
             )}
-            <div
+            <motion.div
               key={view}
-              className={`view-swap ${
+              className={
                 view === 'grid'
                   ? 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6'
                   : 'flex flex-col gap-4'
-              }`}
+              }
+              variants={staggerContainer}
+              initial={prefersReduced ? false : 'hidden'}
+              animate="show"
             >
               {products.map((product) => (
                 <ProductCard key={product.id} product={product} view={view} />
               ))}
-            </div>
+            </motion.div>
             {showPagination && (
               <Pagination
                 currentPage={allProductsQuery.data?.pageNumber ?? 1}
