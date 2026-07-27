@@ -1,6 +1,12 @@
 import { Star } from 'lucide-react';
+import { motion, useReducedMotion } from 'motion/react';
 import type { Product } from '../types/product';
 import { Link, useNavigate } from 'react-router-dom';
+import { fadeUp, softSpring } from '../lib/motion';
+
+// A router Link that also accepts motion props, so the whole card can lift and
+// press as one element while staying a real navigable anchor.
+const MotionLink = motion.create(Link);
 
 export type ProductView = 'grid' | 'list';
 
@@ -26,11 +32,20 @@ function formatPrice(price: number): string {
 export function ProductCard({ product, view = 'grid' }: ProductCardProps) {
   const stockBadge = getStockBadge(product.stockQuantity);
   const navigate = useNavigate();
+  const prefersReduced = useReducedMotion();
+
+  // Physical hover lift + press. Skipped entirely when reduced motion is asked for.
+  const hover = prefersReduced ? undefined : { y: -4, boxShadow: '0 14px 30px rgba(31, 42, 36, 0.12)' };
+  const tap = prefersReduced ? undefined : { scale: 0.985 };
 
   const image = (
     <>
       {product.imageUrl ? (
-        <img src={product.imageUrl} alt={product.name} className="w-full h-full object-cover" />
+        <img
+          src={product.imageUrl}
+          alt={product.name}
+          className="w-full h-full object-cover transition-transform duration-500 ease-out group-hover:scale-[1.05] motion-reduce:transform-none motion-reduce:transition-none"
+        />
       ) : (
         <span
           className="text-[11px] uppercase tracking-[0.18em]"
@@ -92,13 +107,17 @@ export function ProductCard({ product, view = 'grid' }: ProductCardProps) {
 
   if (view === 'list') {
     return (
-      <Link
+      <MotionLink
         to={`/products/${product.id}`}
-        className="rounded-lg overflow-hidden flex"
+        className="group rounded-lg overflow-hidden flex"
         style={{ backgroundColor: '#FFFFFF', border: '1px solid #E4DCC9' }}
+        variants={fadeUp}
+        whileHover={hover}
+        whileTap={tap}
+        transition={softSpring}
       >
         <div
-          className="w-32 sm:w-44 shrink-0 flex items-center justify-center"
+          className="w-32 sm:w-44 shrink-0 overflow-hidden flex items-center justify-center"
           style={{ backgroundColor: '#F0ECE2' }}
         >
           {image}
@@ -118,17 +137,21 @@ export function ProductCard({ product, view = 'grid' }: ProductCardProps) {
           )}
           {priceAndStock}
         </div>
-      </Link>
+      </MotionLink>
     );
   }
 
   return (
-    <Link
+    <MotionLink
       to={`/products/${product.id}`}
-      className="rounded-lg overflow-hidden flex flex-col"
+      className="group rounded-lg overflow-hidden flex flex-col"
       style={{ backgroundColor: '#FFFFFF', border: '1px solid #E4DCC9' }}
+      variants={fadeUp}
+      whileHover={hover}
+      whileTap={tap}
+      transition={softSpring}
     >
-      <div className="aspect-square flex items-center justify-center" style={{ backgroundColor: '#F0ECE2' }}>
+      <div className="aspect-square overflow-hidden flex items-center justify-center" style={{ backgroundColor: '#F0ECE2' }}>
         {image}
       </div>
 
@@ -138,6 +161,6 @@ export function ProductCard({ product, view = 'grid' }: ProductCardProps) {
         {rating}
         {priceAndStock}
       </div>
-    </Link>
+    </MotionLink>
   );
 }

@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link, Outlet, useLocation } from 'react-router-dom';
-import { motion } from 'motion/react';
+import { motion, useReducedMotion } from 'motion/react';
 import {
   LayoutDashboard,
   Package,
@@ -15,6 +15,7 @@ import { Sidebar, SidebarBody, SidebarLink, useSidebar } from './ui/sidebar';
 import { useAuth } from '../context/AuthContext';
 import { useCart } from '../context/CartContext';
 import { cn } from '../lib/utils';
+import { pageIn } from '../lib/motion';
 
 const INK = '#1F2A24';
 const GREEN = '#2F6F4F';
@@ -147,6 +148,8 @@ function SidebarContent() {
 
 export function AppLayout() {
   const [open, setOpen] = useState(false);
+  const location = useLocation();
+  const prefersReduced = useReducedMotion();
 
   return (
     <div className={cn('flex w-full flex-1 flex-col md:flex-row bg-[#FBF7F0]', 'min-h-screen')}>
@@ -154,7 +157,15 @@ export function AppLayout() {
         <SidebarContent />
       </Sidebar>
       <main className="flex-1 min-w-0 overflow-y-auto">
-        <Outlet />
+        {/* Re-keyed per route so each view eases in instead of hard-swapping. */}
+        <motion.div
+          key={location.pathname}
+          variants={pageIn}
+          initial={prefersReduced ? false : 'hidden'}
+          animate="show"
+        >
+          <Outlet />
+        </motion.div>
       </main>
     </div>
   );
