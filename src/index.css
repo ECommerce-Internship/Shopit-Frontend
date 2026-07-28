@@ -126,11 +126,6 @@
   animation: authSwapIn 0.32s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
-/* Same ease-in, reused when the product listing flips between grid/list view. */
-.view-swap {
-  animation: authSwapIn 0.32s cubic-bezier(0.22, 1, 0.36, 1) both;
-}
-
 @media (prefers-reduced-motion: reduce) {
   .chat-panel,
   .chat-panel-closed,
@@ -142,8 +137,7 @@
   .chat-toggle:active {
     transform: none;
   }
-  .auth-swap,
-  .view-swap {
+  .auth-swap {
     animation: none;
   }
 }
