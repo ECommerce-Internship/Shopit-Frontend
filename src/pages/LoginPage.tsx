@@ -67,7 +67,7 @@ function LoginPage() {
 
   const handleGoogleLogin = () => {
     // Full-page navigation to the backend, which kicks off the Google OAuth redirect.
-    window.location.href = `${API_BASE_URL}/api/v1/auth/login/google`;
+    window.location.href = `${API_BASE_URL.replace(/\/$/, '')}/api/v1/auth/login/google`;
   };
 
   return (
