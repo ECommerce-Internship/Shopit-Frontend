@@ -7,6 +7,8 @@ import { fetchCategories, fetchProductById, createProduct, updateProduct, upload
 import { useSellerStores } from '../hooks/useSellerStores';
 import type { Product, Category } from '../types/product';
 import type { StoreResponse } from '../api/SellerApi';
+import { generateProductContent } from '../api/aiApi';
+import { GenerateContentDrawer } from '../components/GenerateContentDrawer';
 
 const inkText = { color: '#1F2A24', fontFamily: "'Inter', sans-serif" };
 const mutedText = { color: '#8A8273', fontFamily: "'Inter', sans-serif" };
@@ -59,6 +61,23 @@ function ProductFormFields({ isEdit, productId, existingProduct, stores, categor
   const [imageUrl, setImageUrl] = useState<string | null>(existingProduct?.imageUrl ?? null);
   const [pendingFile, setPendingFile] = useState<File | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const [specs, setSpecs] = useState('');
+  const [generated, setGenerated] = useState<null | { description: string; features: string[]; seoTitle: string; metaDescription: string }>(null);
+  const [drawerOpen, setDrawerOpen] = useState(false);
+
+const generateMutation = useMutation({
+  mutationFn: () => {
+    const categoryName = categories?.find(c => c.id === Number(categoryId))?.name ?? '';
+    return generateProductContent({ productName: name, category: categoryName, specs });
+  },
+  onSuccess: (content) => { setGenerated(content); setDrawerOpen(true); },
+  onError: () => toast.error('Could not generate content.'),
+});
+
+const handleUseContent = (content: { description: string }) => {
+  setForm((f) => ({ ...f, description: content.description }));
+  setDrawerOpen(false);
+};
 
   const targetStore = storeId !== null ? stores.find((s) => s.id === storeId) : null;
 
@@ -158,8 +177,28 @@ function ProductFormFields({ isEdit, productId, existingProduct, stores, categor
         <div>
           <label style={labelStyle}>Product name</label>
           <input value={name} onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))} style={fieldStyle} placeholder="Handmade Ceramic Mug" />
+        </div>{/* AI Generate Content */}
+          <div style={{ marginBottom: '16px', padding: '14px', borderRadius: '12px', background: '#FAF7FF', border: '1px solid #D9CCF0' }}>
+          <div style={{ ...labelMono, color: '#7B5EA7', marginBottom: '8px' }}>✨ AI Content Generation</div>
+          <label style={labelStyle}>Key specs</label>
+          <textarea
+            value={specs}
+            onChange={(e) => setSpecs(e.target.value)}
+            rows={2}
+            placeholder="Enter comma-separated key features e.g. 4K display, 15-hour battery, USB-C"
+            style={{ ...fieldStyle, resize: 'vertical', borderColor: '#D9CCF0', marginBottom: '10px' }}
+          />
+          <button
+            type="button"
+            onClick={() => generateMutation.mutate()}
+            disabled={!name.trim() || generateMutation.isPending}
+            style={{ width: '100%', padding: '9px', borderRadius: '8px', border: 'none', background: name.trim() ? '#7B5EA7' : '#C2BBAA', color: '#fff', fontFamily: "'Inter', sans-serif", fontSize: '13px', fontWeight: 600, cursor: name.trim() ? 'pointer' : 'not-allowed', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}
+          >
+            {generateMutation.isPending ? <><Loader2 size={13} className="animate-spin" /> Generating...</> : '✨ Generate Content'}
+          </button>
         </div>
 
+{/* Description */}
         <div>
           <label style={labelStyle}>Description</label>
           <textarea value={description} onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))} rows={3} style={{ ...fieldStyle, resize: 'vertical' as const }} />
@@ -240,6 +279,14 @@ function ProductFormFields({ isEdit, productId, existingProduct, stores, categor
             {isEdit ? 'Save changes' : 'Create product'}
           </button>
         </div>
+        <GenerateContentDrawer
+        open={drawerOpen}
+        generated={generated}
+        isRegenerating={generateMutation.isPending}
+        onClose={() => setDrawerOpen(false)}
+        onUseContent={handleUseContent}
+        onRegenerate={() => generateMutation.mutate()}
+      />
       </form>
     </div>
   );
