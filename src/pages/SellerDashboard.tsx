@@ -11,6 +11,7 @@ import {
   fetchSellerTopProducts,
 } from '../api/dashboardApi';
 import { ProductEngagementPanel } from '../components/ProductEngagementPanel';
+
 function formatPrice(price: number): string {
   return '$' + price.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
 }

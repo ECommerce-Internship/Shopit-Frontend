@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { MessageCircle, X } from 'lucide-react';
 import { ChatPanel } from './ChatPanel';
 
@@ -7,25 +7,47 @@ import { ChatPanel } from './ChatPanel';
  * Rendered in the main app layout, gated on the logged-in user there —
  * this component itself doesn't check auth, it's simply not mounted for
  * unauthenticated users.
+ *
+ * The panel stays mounted across toggles so the message thread is kept;
+ * open/close is animated purely via the isOpen prop (see .chat-panel in
+ * index.css). Clicking anywhere outside the panel/button closes it.
  */
 export function ChatButton() {
   const [isOpen, setIsOpen] = useState(false);
+  const containerRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    if (!isOpen) return;
+
+    function handlePointerDown(e: PointerEvent) {
+      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
+        setIsOpen(false);
+      }
+    }
+
+    document.addEventListener('pointerdown', handlePointerDown);
+    return () => document.removeEventListener('pointerdown', handlePointerDown);
+  }, [isOpen]);
 
   return (
-    <>
-      <div className={isOpen ? "" : "hidden"}>
-        <ChatPanel />
-      </div>
+    <div ref={containerRef}>
+      <ChatPanel isOpen={isOpen} />
 
       <button
         type="button"
         onClick={() => setIsOpen((prev) => !prev)}
         aria-label={isOpen ? 'Close chat' : 'Open chat'}
-        className="fixed bottom-6 right-6 w-14 h-14 rounded-full shadow-xl flex items-center justify-center z-50"
+        aria-expanded={isOpen}
+        className="chat-toggle fixed bottom-6 right-6 w-14 h-14 rounded-full shadow-xl z-50"
         style={{ backgroundColor: '#2F6F4F', color: '#FFFFFF' }}
       >
-        {isOpen ? <X size={24} /> : <MessageCircle size={24} />}
+        <span className={`chat-toggle-icon ${isOpen ? 'chat-toggle-icon-hidden' : ''}`} aria-hidden="true">
+          <MessageCircle size={24} />
+        </span>
+        <span className={`chat-toggle-icon ${isOpen ? '' : 'chat-toggle-icon-hidden'}`} aria-hidden="true">
+          <X size={24} />
+        </span>
       </button>
-    </>
+    </div>
   );
 }

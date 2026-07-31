@@ -61,3 +61,84 @@
   }
 }
 /* -------------------------------------------------------------------------- */
+
+/* --- Chat widget motion --------------------------------------------------- */
+/* The panel stays mounted (so the message thread survives close/open) and
+   animates between these two states. Opening springs up from the button
+   corner; closing tucks back in slightly faster. */
+.chat-panel {
+  transform-origin: bottom right;
+  transition:
+    opacity 0.3s cubic-bezier(0.22, 1, 0.36, 1),
+    transform 0.3s cubic-bezier(0.34, 1.4, 0.64, 1),
+    visibility 0s linear 0s;
+}
+.chat-panel-closed {
+  opacity: 0;
+  transform: translateY(16px) scale(0.9);
+  visibility: hidden;
+  pointer-events: none;
+  transition:
+    opacity 0.2s ease-in,
+    transform 0.2s ease-in,
+    visibility 0s linear 0.2s;
+}
+
+.chat-toggle {
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+.chat-toggle:hover {
+  transform: scale(1.06);
+}
+.chat-toggle:active {
+  transform: scale(0.94);
+}
+
+/* The open/close icons are stacked; the inactive one spins out while the
+   active one spins in. */
+.chat-toggle-icon {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: opacity 0.25s ease, transform 0.25s cubic-bezier(0.34, 1.4, 0.64, 1);
+}
+.chat-toggle-icon-hidden {
+  opacity: 0;
+  transform: rotate(-90deg) scale(0.5);
+}
+
+/* --- Auth mode swap ------------------------------------------------------- */
+/* Re-keyed content (heading, footer links) eases in when the Customer/Seller
+   switch flips on the sign-in page. */
+@keyframes authSwapIn {
+  from {
+    opacity: 0;
+    transform: translateY(5px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+.auth-swap {
+  animation: authSwapIn 0.32s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .chat-panel,
+  .chat-panel-closed,
+  .chat-toggle,
+  .chat-toggle-icon {
+    transition: none;
+  }
+  .chat-toggle:hover,
+  .chat-toggle:active {
+    transform: none;
+  }
+  .auth-swap {
+    animation: none;
+  }
+}
+/* -------------------------------------------------------------------------- */
