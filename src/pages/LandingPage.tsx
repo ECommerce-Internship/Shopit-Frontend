@@ -1,481 +1,502 @@
-import { useEffect, useRef, type CSSProperties } from 'react';
-import { Link } from 'react-router-dom';
+import { useEffect, useRef, useState, type CSSProperties } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import { ShoppingBag, User, ArrowRight } from 'lucide-react';
+import { useQuery } from '@tanstack/react-query';
+import { PlaceholdersAndVanishInput } from '../components/ui/placeholders-and-vanish-input';
+import { fetchCategories } from '../api/productsApi';
 
 // ---------------------------------------------------------------------------
 // Shopit landing page — the public front door shown at "/".
-// Visual design generated in Claude Design and converted to React here.
-// CTAs are wired to the real app routes (/products, /login, /register).
-// Animations (scroll reveals, magnetic buttons, hero parallax, SVG line draw)
-// are driven by a single useEffect and respect prefers-reduced-motion.
+// Built in the DESIGN.md "Peak Design" editorial idiom: full-bleed sections
+// that alternate light ↔ near-black, a 50/50 split hero with an italic serif
+// headline, flat borderless product cards, hairline dividers, NO shadows and
+// NO gradients — typography and (placeholder) product imagery do the work.
+// The reference's single rare accent (Ember Red) is mapped to our brand green;
+// dark panels use our ink, and the warm cream/sand neutrals keep the app theme.
 // ---------------------------------------------------------------------------
 
+// Palette — our green theme mapped onto Peak Design's monochrome roles.
+const INK = '#1F2A24';       // carbon — primary text
+const CANVAS = '#FBF7F0';    // warm paper (light canvas)
+const PAPER = '#FFFFFF';     // pure white — product image ground
+const FOG = '#F0ECE2';       // soft surface / image placeholder fill
+const BORDER = '#E4DCC9';    // hairline divider (sand)
+const MUTED = '#8A8273';     // graphite — muted/secondary text
+const GREEN = '#2F6F4F';     // the single accent (stands in for Ember Red)
+
+// Rotating placeholders for the nav search — mirrors the product page's animated bar.
+const SEARCH_PLACEHOLDERS = [
+  'Search for wireless headphones...',
+  'A cozy knit sweater for winter',
+  'Minimalist leather wallet',
+  'Something to brew great coffee',
+  'A gift under $50',
+];
+
+const serif = "'Fraunces', serif";              // editorial display serif
+const sans = "'Inter', system-ui, sans-serif";  // grotesque body + UI
+
+// bryant substitute: compressed, uppercase, positively tracked label voice.
+const label: CSSProperties = { fontFamily: sans, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em' };
+
 const KEYFRAMES = `
-@keyframes shopit-riseIn { from { opacity: 0; transform: translateY(46px); filter: blur(10px); } to { opacity: 1; transform: translateY(0); filter: blur(0); } }
-@keyframes shopit-floatY { 0% { transform: translateY(0); } 50% { transform: translateY(-22px); } 100% { transform: translateY(0); } }
-@keyframes shopit-floatYb { 0% { transform: translateY(0); } 50% { transform: translateY(18px); } 100% { transform: translateY(0); } }
-@keyframes shopit-glowPulse { 0%,100% { opacity: .35; transform: scale(1); } 50% { opacity: .9; transform: scale(1.12); } }
-@keyframes shopit-marquee { from { transform: translateX(0); } to { transform: translateX(-50%); } }
-@keyframes shopit-haloBreathe { 0%,100% { opacity: .5; } 50% { opacity: 1; } }
-.shopit-lp a { text-decoration: none; }
-.shopit-lp [data-magnetic] { transition: transform .25s cubic-bezier(.2,.7,.2,1), box-shadow .25s ease; }
+/* Section-to-section scroll snapping. .peak is its own 100vh scrollport, so this
+   stays scoped to the landing page and the sticky header sticks within it. Each
+   section snaps to the top, offset below the sticky header via scroll-padding.
+   'proximity' (not 'mandatory') keeps sections taller than the viewport from
+   trapping the scroll. */
+.peak {
+  height: 100vh;
+  overflow-y: scroll;
+  scroll-snap-type: y proximity;
+  scroll-padding-top: 120px;
+  scroll-behavior: smooth;
+}
+.peak > section, .peak > footer { scroll-snap-align: start; }
+@keyframes peak-rise { from { opacity: 0; transform: translateY(24px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes peak-marquee { from { transform: translateX(-50%); } to { transform: translateX(0); } }
+.peak .marquee { overflow: hidden; }
+.peak .marquee-track { display: flex; width: max-content; animation: peak-marquee 45s linear infinite; }
+.peak .marquee:hover .marquee-track { animation-play-state: paused; }
+@keyframes peak-marquee-rev { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+.peak .marquee-track-rev { display: flex; width: max-content; animation: peak-marquee-rev 45s linear infinite; }
+.peak .marquee:hover .marquee-track-rev { animation-play-state: paused; }
+/* Sticky-story: the right card is pinned (position: sticky) while the left steps
+   scroll; each step fades/rises in when it reaches the viewport centre and the
+   pinned card cross-fades to that step's image. */
+.peak .story-grid { display: grid; grid-template-columns: 1fr 1fr; gap: clamp(24px, 5vw, 72px); align-items: start; }
+.peak .story-step { min-height: 84vh; display: flex; flex-direction: column; justify-content: center; transition: opacity .5s ease, transform .5s ease; }
+.peak .story-sticky { position: sticky; top: 120px; height: calc(100vh - 120px); display: flex; align-items: center; justify-content: center; }
+.peak .story-card { position: relative; width: 100%; max-width: 460px; aspect-ratio: 4 / 5; border-radius: 18px; overflow: hidden; background: ${FOG}; box-shadow: 0 40px 80px -28px rgba(20,26,23,.4); }
+.peak .story-card img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; transition: opacity .6s ease; }
+.peak a { text-decoration: none; }
+.peak .navlink { transition: color .2s ease; }
+.peak .navlink:hover { color: ${INK}; }
+.peak .chip { transition: background .2s ease, color .2s ease, border-color .2s ease; }
+.peak .btn { transition: opacity .2s ease, background .2s ease, color .2s ease; }
+.peak .btn:hover { opacity: .85; }
+/* Explore CTA: outlined on the green panel, fills white with green text on hover. */
+.peak .btn-explore { background: transparent; color: ${PAPER}; border: 1px solid ${PAPER}; transition: background .25s ease, color .25s ease, border-color .25s ease; }
+.peak .btn-explore:hover { background: #FFFFFF; color: ${GREEN}; border-color: ${GREEN}; opacity: 1; }
+/* Shop now CTA: the inverse — white fill with green text, flips to green fill + white text on hover, keeping a white border. */
+.peak .btn-shopnow { background: #FFFFFF; color: ${GREEN}; border: 1px solid #FFFFFF; transition: background .25s ease, color .25s ease, border-color .25s ease; }
+.peak .btn-shopnow:hover { background: ${GREEN}; color: #FFFFFF; border-color: #FFFFFF; opacity: 1; }
+.peak .card img, .peak .card .ph { transition: opacity .3s ease; }
+.peak .card:hover .ph { opacity: .78; }
+.peak .hero { display: grid; grid-template-columns: 1fr 1fr; }
+.peak .split { display: grid; grid-template-columns: 1fr 1fr; }
+@media (max-width: 860px) {
+  .peak .hero, .peak .split { grid-template-columns: 1fr; }
+  .peak .hero .media, .peak .split .media { min-height: 320px; }
+  .peak .navcenter { display: none !important; }
+  /* Stacked sections get tall on mobile — free-scroll instead of snapping. */
+  .peak { scroll-snap-type: none; }
+  /* Story collapses to a single column; the card un-pins and sits above/with each step. */
+  .peak .story-grid { grid-template-columns: 1fr; }
+  .peak .story-sticky { position: static; height: auto; margin-bottom: 24px; }
+  .peak .story-step { min-height: auto; padding: 32px 0; opacity: 1 !important; transform: none !important; }
+}
 @media (prefers-reduced-motion: reduce) {
-  .shopit-lp *, .shopit-lp *::before, .shopit-lp *::after { animation: none !important; }
+  .peak [data-reveal] { opacity: 1 !important; transform: none !important; }
+  .peak { scroll-snap-type: none; scroll-behavior: auto; }
+  .peak .story-step { opacity: 1 !important; transform: none !important; transition: none !important; }
+  .peak .marquee { overflow-x: auto; }
+  .peak .marquee-track, .peak .marquee-track-rev { animation: none !important; }
 }
 `;
 
-type Tile = { name: string; cat: string; tag: string };
-const BASE_TILES: Tile[] = [
-  { name: 'Linen Shirt', cat: 'Fashion', tag: 'Best Seller' },
-  { name: 'Wireless Buds', cat: 'Electronics', tag: '-30%' },
-  { name: 'Leather Tote', cat: 'Accessories', tag: 'Hot Deal' },
-  { name: 'Ceramic Vase', cat: 'Home & Lifestyle', tag: 'New' },
-  { name: 'Smart Watch', cat: 'Electronics', tag: '-25%' },
-  { name: 'Knit Sweater', cat: 'Fashion', tag: 'Best Seller' },
-  { name: 'Desk Lamp', cat: 'Home & Lifestyle', tag: 'Hot Deal' },
+const container: CSSProperties = { maxWidth: '1440px', margin: '0 auto', width: '100%', padding: '0 clamp(20px, 5vw, 48px)' };
+
+// Real product photography via LoremFlickr — the same keyword-based source the
+// rest of the app uses (see lib/productImage.ts). The `lock` seed keeps each
+// image stable across reloads instead of shuffling every render.
+function photo(keywords: string, seed: number, w = 800, h = 800): string {
+  return `https://loremflickr.com/${w}/${h}/${encodeURIComponent(keywords)}?lock=${seed}`;
+}
+
+type Product = { id: number; keywords: string; name: string; brand: string; price: string; badge?: 'NEW' | 'SALE' };
+const PRODUCTS: Product[] = [
+  { id: 1, keywords: 'backpack,bag', name: 'Everyday Backpack', brand: 'Trail', price: '$219' },
+  { id: 2, keywords: 'camera,case', name: 'Camera Cube', brand: 'Optic', price: '$89', badge: 'NEW' },
+  { id: 3, keywords: 'sling,bag', name: 'Sling 6L', brand: 'Trail', price: '$129' },
+  { id: 4, keywords: 'duffel,bag', name: 'Travel Duffel', brand: 'Voyage', price: '$179', badge: 'SALE' },
+  { id: 5, keywords: 'pouch,cable', name: 'Tech Pouch', brand: 'Optic', price: '$59' },
+  { id: 6, keywords: 'toiletry,bag', name: 'Wash Kit', brand: 'Voyage', price: '$69' },
+  { id: 7, keywords: 'wallet,leather', name: 'Field Wallet', brand: 'Trail', price: '$49', badge: 'NEW' },
+  { id: 8, keywords: 'camera,tripod', name: 'Capture Clip', brand: 'Optic', price: '$84' },
 ];
-const TILES = [...BASE_TILES, ...BASE_TILES];
 
-type Quote = { text: string; name: string; shop: string; c1: string; c2: string; delay: number; offset: string };
-const QUOTES: Quote[] = [
-  { text: "Fast shipping and the prices just can't be beat.", name: 'Maya R.', shop: 'Verified buyer', c1: '#22C55E', c2: '#15803D', delay: 0, offset: '0px' },
-  { text: 'My go-to store for pretty much everything now.', name: 'Devin O.', shop: 'Verified buyer', c1: '#4ADE80', c2: '#22C55E', delay: 130, offset: '32px' },
-  { text: 'Checkout was instant and my order arrived early.', name: 'Tariq B.', shop: 'Verified buyer', c1: '#16A34A', c2: '#15803D', delay: 260, offset: '12px' },
+// Steps for the sticky-story section. Each step fades in as it hits the viewport
+// centre; the pinned card on the right cross-fades to `keywords`.
+type Story = { keywords: string; seed: number; tag: string; title: string; body: string };
+const STORY: Story[] = [
+  { keywords: 'fashion,clothing,rack', seed: 71, tag: 'Fashion', title: 'Style for every day.', body: 'A curated edit of apparel and accessories — the pieces you reach for, chosen with intent.' },
+  { keywords: 'headphones,gadget,desk', seed: 72, tag: 'Electronics', title: 'Tech that keeps up.', body: 'From audio to everyday carry, gear that earns its place — quality you can actually trust.' },
+  { keywords: 'delivery,parcel,doorstep', seed: 73, tag: 'Delivered', title: 'At your door, fast.', body: 'One checkout, thousands of products, brought to your doorstep — with 30-day returns, always.' },
 ];
-
-const mono = "'IBM Plex Mono', monospace";
-const serif = "'Fraunces', serif";
-
-const revealStyle: CSSProperties = {
-  opacity: 0,
-  transform: 'translateY(40px)',
-  filter: 'blur(6px)',
-  transition: 'opacity .9s ease, transform .9s cubic-bezier(.2,.7,.2,1), filter .9s ease',
-};
-
-const eyebrow: CSSProperties = {
-  fontFamily: mono,
-  fontSize: '11.5px',
-  letterSpacing: '3px',
-  textTransform: 'uppercase',
-  color: '#15803D',
-  marginBottom: '18px',
-};
 
 function LandingPage() {
   const rootRef = useRef<HTMLDivElement>(null);
+  const navigate = useNavigate();
+
+  // Real catalog categories for the pill bar. Show only top-level categories so the
+  // row stays concise; clicking one deep-links to the product page filtered by it.
+  const { data: categories } = useQuery({ queryKey: ['categories'], queryFn: fetchCategories });
+  const topCategories = (categories ?? []).filter((c) => c.parentCategoryId === null);
+
+  function submitSearch(e: React.FormEvent) {
+    e.preventDefault();
+    navigate('/products');
+  }
 
   useEffect(() => {
     const root = rootRef.current;
     if (!root) return;
-    const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    const reveals = root.querySelectorAll<HTMLElement>('[data-reveal]');
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
 
-    if (reduce) {
-      reveals.forEach((el) => {
-        el.style.opacity = '1';
-        el.style.transform = 'none';
-        el.style.filter = 'none';
-      });
-      return;
-    }
-
-    // scroll reveals
     const io = new IntersectionObserver(
       (entries) => {
         entries.forEach((en) => {
           if (en.isIntersecting) {
             const el = en.target as HTMLElement;
             const d = parseFloat(el.getAttribute('data-delay') || '0');
-            setTimeout(() => {
-              el.style.opacity = '1';
-              el.style.transform = 'none';
-              el.style.filter = 'none';
-            }, d);
+            el.style.animation = `peak-rise .7s cubic-bezier(.2,.7,.2,1) ${d}ms both`;
             io.unobserve(el);
           }
         });
       },
-      { threshold: 0.16, rootMargin: '0px 0px -8% 0px' }
+      { threshold: 0.15, rootMargin: '0px 0px -6% 0px' },
     );
-    reveals.forEach((el) => io.observe(el));
-
-    // magnetic buttons
-    const magnets: Array<[HTMLElement, (e: MouseEvent) => void, () => void]> = [];
-    root.querySelectorAll<HTMLElement>('[data-magnetic]').forEach((btn) => {
-      const move = (e: MouseEvent) => {
-        const r = btn.getBoundingClientRect();
-        const x = e.clientX - r.left - r.width / 2;
-        const y = e.clientY - r.top - r.height / 2;
-        btn.style.transform = `translate(${x * 0.3}px,${y * 0.45}px)`;
-      };
-      const leave = () => {
-        btn.style.transform = 'translate(0,0)';
-      };
-      btn.addEventListener('mousemove', move);
-      btn.addEventListener('mouseleave', leave);
-      magnets.push([btn, move, leave]);
+    root.querySelectorAll<HTMLElement>('[data-reveal]').forEach((el) => {
+      el.style.opacity = '0';
+      io.observe(el);
     });
-
-    // hero pointer parallax
-    const hero = root.querySelector<HTMLElement>('[data-hero]');
-    const floats = root.querySelectorAll<HTMLElement>('[data-depth]');
-    const heroMove = (e: MouseEvent) => {
-      const cx = window.innerWidth / 2;
-      const cy = window.innerHeight / 2;
-      const dx = (e.clientX - cx) / cx;
-      const dy = (e.clientY - cy) / cy;
-      floats.forEach((f) => {
-        const d = parseFloat(f.getAttribute('data-depth') || '1');
-        f.style.transform = `translate(${dx * d * -16}px,${dy * d * -16}px)`;
-      });
-    };
-    if (hero) hero.addEventListener('mousemove', heroMove);
-
-    // SVG line draw on scroll
-    const path = root.querySelector<SVGPathElement>('[data-draw]');
-    const howSec = root.querySelector<HTMLElement>('[data-howitworks]');
-    let onScroll: (() => void) | null = null;
-    if (path && howSec) {
-      const len = path.getTotalLength();
-      path.style.strokeDasharray = String(len);
-      path.style.strokeDashoffset = String(len);
-      const draw = () => {
-        const r = howSec.getBoundingClientRect();
-        const vh = window.innerHeight;
-        let p = (vh * 0.85 - r.top) / (vh * 0.55);
-        p = Math.max(0, Math.min(1, p));
-        path.style.strokeDashoffset = String(len * (1 - p));
-        path.style.opacity = (0.3 + p * 0.7).toFixed(3);
-      };
-      onScroll = () => window.requestAnimationFrame(draw);
-      window.addEventListener('scroll', onScroll, { passive: true });
-      window.addEventListener('resize', onScroll);
-      draw();
-    }
-
-    return () => {
-      io.disconnect();
-      magnets.forEach(([btn, move, leave]) => {
-        btn.removeEventListener('mousemove', move);
-        btn.removeEventListener('mouseleave', leave);
-      });
-      if (hero) hero.removeEventListener('mousemove', heroMove);
-      if (onScroll) {
-        window.removeEventListener('scroll', onScroll);
-        window.removeEventListener('resize', onScroll);
-      }
-    };
+    return () => io.disconnect();
   }, []);
 
   return (
-    <div
-      ref={rootRef}
-      className="shopit-lp"
-      style={{
-        position: 'relative',
-        background:
-          'radial-gradient(1200px 800px at 75% -5%, #E6F6EC 0%, rgba(230,246,236,0) 55%), radial-gradient(1000px 700px at 0% 30%, #EAF7EE 0%, rgba(234,247,238,0) 50%), #F6FAF7',
-        color: '#1C3527',
-        fontFamily: 'Inter, system-ui, sans-serif',
-        overflowX: 'hidden',
-        minWidth: '320px',
-      }}
-    >
+    <div ref={rootRef} className="peak" style={{ background: CANVAS, color: INK, fontFamily: sans, overflowX: 'hidden', minWidth: '320px' }}>
       <style>{KEYFRAMES}</style>
 
-      {/* ============ NAV ============ */}
-      <header
-        style={{
-          position: 'sticky',
-          top: 0,
-          zIndex: 50,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          padding: '20px clamp(20px, 5vw, 64px)',
-          backdropFilter: 'blur(14px)',
-          background: 'linear-gradient(180deg, rgba(246,250,247,.92), rgba(246,250,247,.55))',
-          borderBottom: '1px solid rgba(34,197,94,.16)',
-        }}
-      >
-        <Wordmark size={26} />
-        <nav
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: 'clamp(16px, 3vw, 36px)',
-            fontSize: '14.5px',
-            fontWeight: 500,
-            color: '#5B7567',
-          }}
-        >
-          <Link to="/products" style={{ color: '#5B7567' }}>Shop</Link>
-          <a href="#sellers" style={{ color: '#5B7567' }}>Why Shopit</a>
-          <a href="#reviews" style={{ color: '#5B7567' }}>Reviews</a>
-          <Link
-            to="/login"
-            style={{ color: '#5B7567' }}
-          >
-            Sign in
-          </Link>
-          <Link
-            to="/products"
-            data-magnetic
-            style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: '8px',
-              padding: '11px 22px',
-              borderRadius: '999px',
-              background: 'linear-gradient(135deg, #22C55E, #15803D)',
-              color: '#fff',
-              fontWeight: 600,
-              boxShadow: '0 8px 20px rgba(22,163,74,.28)',
-            }}
-          >
-            Start Shopping
-          </Link>
-        </nav>
+      {/* ============ PRIMARY NAV ============ */}
+      <header style={{ position: 'sticky', top: 0, zIndex: 50, background: CANVAS, borderBottom: `1px solid ${BORDER}` }}>
+        <div style={{ ...container, height: '64px', display: 'flex', alignItems: 'center', gap: 'clamp(16px, 3vw, 40px)' }}>
+          <Wordmark size={22} />
+
+          <nav className="navcenter" style={{ display: 'flex', alignItems: 'center', gap: '28px', ...label, fontSize: '14px', color: '#363537' }}>
+            <Link to="/products" className="navlink" style={{ color: '#363537' }}>Shop</Link>
+            <Link to="/products" className="navlink" style={{ color: '#363537' }}>New</Link>
+            <Link to="/products" className="navlink" style={{ color: '#363537' }}>Deals</Link>
+          </nav>
+
+          <div style={{ flex: 1, maxWidth: '360px', marginLeft: 'auto' }}>
+            <PlaceholdersAndVanishInput
+              placeholders={SEARCH_PLACEHOLDERS}
+              onChange={() => {}}
+              onSubmit={submitSearch}
+              onImageSearch={() => navigate('/visual-search')}
+              className="h-10"
+            />
+          </div>
+
+          <div style={{ display: 'flex', alignItems: 'center', gap: '18px' }}>
+            <Link to="/login" className="navlink" aria-label="Account" style={{ color: INK, display: 'inline-flex' }}><User size={20} strokeWidth={1.5} /></Link>
+            <Link to="/cart" className="navlink" aria-label="Cart" style={{ color: INK, display: 'inline-flex' }}><ShoppingBag size={20} strokeWidth={1.5} /></Link>
+          </div>
+        </div>
+
+        {/* Category filter pills — sourced from the catalog's categories. */}
+        <div style={{ borderTop: `1px solid ${BORDER}` }}>
+          <div style={{ ...container, display: 'flex', gap: '8px', overflowX: 'auto', padding: '10px clamp(20px, 5vw, 48px)' }}>
+            <Link
+              to="/products"
+              className="chip"
+              style={{
+                ...label,
+                fontSize: '13px',
+                whiteSpace: 'nowrap',
+                padding: '8px 20px',
+                borderRadius: '9999px',
+                border: '1px solid transparent',
+                background: GREEN,
+                color: PAPER,
+              }}
+            >
+              All
+            </Link>
+            {topCategories.map((c) => (
+              <Link
+                key={c.id}
+                to={`/products?categoryId=${c.id}`}
+                className="chip"
+                style={{
+                  ...label,
+                  fontSize: '13px',
+                  whiteSpace: 'nowrap',
+                  padding: '8px 20px',
+                  borderRadius: '9999px',
+                  border: `1px solid ${BORDER}`,
+                  background: 'transparent',
+                  color: '#363537',
+                }}
+              >
+                {c.name}
+              </Link>
+            ))}
+          </div>
+        </div>
       </header>
 
-      {/* ============ HERO ============ */}
-      <section
-        data-hero
-        style={{
-          position: 'relative',
-          minHeight: '94vh',
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          justifyContent: 'center',
-          textAlign: 'center',
-          padding: '80px clamp(20px, 5vw, 64px) 110px',
-          overflow: 'hidden',
-        }}
-      >
-        {/* ambient glow blobs */}
-        <div style={{ position: 'absolute', top: '8%', left: '12%', width: '420px', height: '420px', borderRadius: '50%', background: 'radial-gradient(circle, rgba(34,197,94,.16), transparent 65%)', filter: 'blur(20px)', animation: 'shopit-haloBreathe 7s ease-in-out infinite', pointerEvents: 'none' }} />
-        <div style={{ position: 'absolute', bottom: '4%', right: '8%', width: '480px', height: '480px', borderRadius: '50%', background: 'radial-gradient(circle, rgba(21,128,61,.14), transparent 65%)', filter: 'blur(24px)', animation: 'shopit-haloBreathe 9s ease-in-out infinite .8s', pointerEvents: 'none' }} />
-
-        {/* floating ticket stubs (parallax) */}
-        <div data-depth="2.2" style={{ position: 'absolute', top: '16%', left: '7%', width: '158px', transform: 'rotate(-9deg)', animation: 'shopit-floatY 8s ease-in-out infinite', pointerEvents: 'none' }}>
-          <div style={{ position: 'relative', padding: '14px', borderRadius: '14px', background: '#FFFFFF', border: '1px solid rgba(34,197,94,.22)', boxShadow: '0 18px 44px rgba(20,60,38,.14), 0 0 22px rgba(34,197,94,.10)' }}>
-            <div style={{ height: '78px', borderRadius: '8px', background: 'repeating-linear-gradient(45deg, rgba(34,197,94,.07) 0 7px, rgba(34,197,94,.02) 7px 14px)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: mono, fontSize: '9px', color: '#8AA394', letterSpacing: '.5px' }}>product shot</div>
-            <div style={{ marginTop: '9px', fontFamily: mono, fontSize: '9px', letterSpacing: '1px', color: '#16A34A' }}>ADMIT · ONE</div>
-          </div>
-        </div>
-        <div data-depth="1.4" style={{ position: 'absolute', top: '22%', right: '9%', width: '140px', transform: 'rotate(7deg)', animation: 'shopit-floatYb 10s ease-in-out infinite .5s', pointerEvents: 'none' }}>
-          <div style={{ padding: '13px', borderRadius: '14px', background: '#FFFFFF', border: '1px solid rgba(52,211,153,.3)', boxShadow: '0 18px 44px rgba(20,60,38,.14), 0 0 22px rgba(21,128,61,.10)' }}>
-            <div style={{ height: '64px', borderRadius: '8px', background: 'repeating-linear-gradient(45deg, rgba(34,197,94,.07) 0 7px, rgba(34,197,94,.02) 7px 14px)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: mono, fontSize: '9px', color: '#8AA394' }}>deal card</div>
-            <div style={{ marginTop: '8px', height: '5px', width: '60%', borderRadius: '3px', background: 'rgba(91,117,103,.35)' }} />
-          </div>
-        </div>
-        <div data-depth="3" style={{ position: 'absolute', bottom: '16%', left: '13%', width: '120px', transform: 'rotate(6deg)', animation: 'shopit-floatY 11s ease-in-out infinite 1.2s', pointerEvents: 'none' }}>
-          <div style={{ padding: '11px', borderRadius: '12px', background: '#FFFFFF', border: '1px solid rgba(74,222,128,.32)', boxShadow: '0 14px 36px rgba(20,60,38,.14), 0 0 18px rgba(74,222,128,.10)' }}>
-            <div style={{ height: '52px', borderRadius: '7px', background: 'repeating-linear-gradient(45deg, rgba(34,197,94,.07) 0 7px, rgba(34,197,94,.02) 7px 14px)' }} />
-            <div style={{ marginTop: '7px', fontFamily: mono, fontSize: '8px', letterSpacing: '1px', color: '#16A34A' }}>№ 0042</div>
-          </div>
-        </div>
-        <div data-depth="1.8" style={{ position: 'absolute', bottom: '22%', right: '13%', width: '96px', height: '96px', borderRadius: '16px', background: 'linear-gradient(135deg, rgba(34,197,94,.18), rgba(21,128,61,.12))', border: '1px solid rgba(34,197,94,.3)', boxShadow: '0 10px 30px rgba(20,60,38,.12)', transform: 'rotate(-12deg)', animation: 'shopit-floatYb 9s ease-in-out infinite', pointerEvents: 'none' }} />
-
-        {/* particles */}
-        <div style={{ position: 'absolute', top: '30%', left: '30%', width: '6px', height: '6px', borderRadius: '50%', background: '#22C55E', boxShadow: '0 0 10px 2px rgba(34,197,94,.45)', animation: 'shopit-glowPulse 4s ease-in-out infinite', pointerEvents: 'none' }} />
-        <div style={{ position: 'absolute', top: '60%', left: '22%', width: '5px', height: '5px', borderRadius: '50%', background: '#16A34A', boxShadow: '0 0 10px 2px rgba(22,163,74,.45)', animation: 'shopit-glowPulse 5.5s ease-in-out infinite 1s', pointerEvents: 'none' }} />
-        <div style={{ position: 'absolute', top: '38%', right: '28%', width: '5px', height: '5px', borderRadius: '50%', background: '#4ADE80', boxShadow: '0 0 10px 2px rgba(74,222,128,.5)', animation: 'shopit-glowPulse 4.8s ease-in-out infinite .4s', pointerEvents: 'none' }} />
-
-        {/* hero text */}
-        <div style={{ position: 'relative', zIndex: 5, maxWidth: '980px' }}>
-          <div style={{ display: 'inline-flex', alignItems: 'center', gap: '10px', padding: '7px 16px', borderRadius: '999px', border: '1px solid rgba(34,197,94,.35)', background: 'rgba(34,197,94,.08)', fontFamily: mono, fontSize: '11.5px', letterSpacing: '3px', textTransform: 'uppercase', color: '#15803D', marginBottom: '30px', animation: 'shopit-riseIn .8s cubic-bezier(.2,.7,.2,1) both' }}>
-            <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#22C55E', boxShadow: '0 0 8px #22C55E' }} />Your everyday store
-          </div>
-
-          <h1 style={{ margin: 0, fontFamily: serif, fontWeight: 600, fontSize: 'clamp(42px, 8vw, 104px)', lineHeight: '.98', letterSpacing: '-2px', color: '#0C2417' }}>
-            <span style={{ display: 'block' }}>
-              <span style={{ display: 'inline-block', animation: 'shopit-riseIn .9s cubic-bezier(.2,.7,.2,1) both', animationDelay: '80ms' }}>Shop</span>{' '}
-              <span style={{ display: 'inline-block', animation: 'shopit-riseIn .9s cubic-bezier(.2,.7,.2,1) both', animationDelay: '200ms', background: 'linear-gradient(135deg, #16A34A, #22C55E)', WebkitBackgroundClip: 'text', backgroundClip: 'text', color: 'transparent' }}>smarter.</span>
-            </span>
-            <span style={{ display: 'block' }}>
-              <span style={{ display: 'inline-block', animation: 'shopit-riseIn .9s cubic-bezier(.2,.7,.2,1) both', animationDelay: '340ms' }}>Live</span>{' '}
-              <span style={{ display: 'inline-block', animation: 'shopit-riseIn .9s cubic-bezier(.2,.7,.2,1) both', animationDelay: '460ms', fontStyle: 'italic', background: 'linear-gradient(135deg, #22C55E, #15803D)', WebkitBackgroundClip: 'text', backgroundClip: 'text', color: 'transparent' }}>better.</span>
-            </span>
-          </h1>
-
-          <p style={{ maxWidth: '560px', margin: '28px auto 0', fontSize: 'clamp(16px, 2vw, 19px)', lineHeight: 1.6, color: '#5B7567', animation: 'shopit-riseIn 1s cubic-bezier(.2,.7,.2,1) both', animationDelay: '620ms' }}>
-            Your one-stop store for fashion, electronics, and everything in between — at prices you'll love.
-          </p>
-
-          <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'center', gap: '18px', marginTop: '40px', animation: 'shopit-riseIn 1s cubic-bezier(.2,.7,.2,1) both', animationDelay: '740ms' }}>
-            <Link to="/products" data-magnetic style={{ display: 'inline-flex', alignItems: 'center', gap: '10px', padding: '17px 34px', borderRadius: '999px', background: 'linear-gradient(135deg, #22C55E, #15803D)', color: '#fff', fontWeight: 600, fontSize: '16.5px', boxShadow: '0 10px 28px rgba(22,163,74,.32)' }}>
-              Start Shopping <span style={{ fontSize: '18px' }}>→</span>
-            </Link>
-            <Link to="/products" style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', padding: '17px 28px', borderRadius: '999px', border: '1px solid rgba(34,197,94,.4)', color: '#15803D', fontWeight: 600, fontSize: '16px' }}>
-              Browse Deals
-            </Link>
-          </div>
-        </div>
-      </section>
-
-      {/* ============ VALUE PROPOSITION ============ */}
-      <section id="sellers" style={{ position: 'relative', padding: 'clamp(80px, 12vw, 150px) clamp(20px, 5vw, 64px)', maxWidth: '1240px', margin: '0 auto' }}>
-        <div data-reveal style={{ ...revealStyle, textAlign: 'center', maxWidth: '760px', margin: '0 auto 64px' }}>
-          <div style={eyebrow}>Why Shopit</div>
-          <h2 style={{ margin: 0, fontFamily: serif, fontWeight: 600, fontSize: 'clamp(34px, 6vw, 68px)', lineHeight: 1.02, letterSpacing: '-1.5px', color: '#0C2417' }}>
-            Shopping made <span style={{ fontStyle: 'italic', background: 'linear-gradient(135deg, #16A34A, #22C55E)', WebkitBackgroundClip: 'text', backgroundClip: 'text', color: 'transparent' }}>simple.</span>
-          </h2>
-          <p style={{ margin: '22px auto 0', maxWidth: '540px', fontSize: '18px', lineHeight: 1.6, color: '#5B7567' }}>Everything you need, nothing you don't.</p>
-        </div>
-
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '26px' }}>
-          {[
-            { icon: '⚡', title: 'Fast delivery', body: 'At your door in days, not weeks.', border: 'rgba(34,197,94,.2)', iconBg: 'linear-gradient(135deg, rgba(34,197,94,.18), rgba(34,197,94,.04))', iconBorder: 'rgba(34,197,94,.4)', dash: 'rgba(34,197,94,.4)', stub: 'STUB · 01', delay: 0 },
-            { icon: '★', title: 'Best prices', body: "Everyday low prices you won't beat.", border: 'rgba(52,211,153,.26)', iconBg: 'linear-gradient(135deg, rgba(52,211,153,.2), rgba(52,211,153,.04))', iconBorder: 'rgba(52,211,153,.45)', dash: 'rgba(52,211,153,.45)', stub: 'STUB · 02', delay: 100 },
-            { icon: '🔒', title: 'Secure checkout', body: 'Pay safely with encrypted, one-tap checkout.', border: 'rgba(74,222,128,.28)', iconBg: 'linear-gradient(135deg, rgba(74,222,128,.2), rgba(74,222,128,.04))', iconBorder: 'rgba(74,222,128,.45)', dash: 'rgba(74,222,128,.45)', stub: 'STUB · 03', delay: 200 },
-            { icon: '◆', title: 'Wide selection', body: 'Thousands of products across every category.', border: 'rgba(34,197,94,.22)', iconBg: 'linear-gradient(135deg, rgba(21,128,61,.22), rgba(34,197,94,.05))', iconBorder: 'rgba(34,197,94,.45)', dash: 'rgba(34,197,94,.4)', stub: 'STUB · 04', delay: 300 },
-          ].map((c) => (
-            <div key={c.stub} data-reveal data-delay={c.delay} style={{ ...revealStyle, transform: 'translateY(48px)' }}>
-              <div style={{ position: 'relative', padding: '30px 28px 34px', borderRadius: '20px', background: '#FFFFFF', border: `1px solid ${c.border}`, boxShadow: '0 20px 50px rgba(20,60,38,.10)' }}>
-                <div style={{ width: '52px', height: '52px', borderRadius: '14px', background: c.iconBg, border: `1px solid ${c.iconBorder}`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '24px' }}>{c.icon}</div>
-                <h3 style={{ margin: '22px 0 10px', fontFamily: serif, fontWeight: 600, fontSize: '23px', color: '#0C2417' }}>{c.title}</h3>
-                <p style={{ margin: 0, fontSize: '15px', lineHeight: 1.6, color: '#5B7567' }}>{c.body}</p>
-                <div style={{ position: 'absolute', left: 0, right: 0, bottom: '78px', borderTop: `2px dashed ${c.dash}` }} />
-                <div style={{ position: 'absolute', left: '28px', bottom: '28px', fontFamily: mono, fontSize: '10px', letterSpacing: '2px', color: '#16A34A' }}>{c.stub}</div>
-              </div>
+      {/* ============ HERO SPLIT PANEL ============ */}
+      <section className="hero" style={{ width: '100%', minHeight: '560px' }}>
+        {/* Left — dark editorial panel */}
+        <div style={{ background: GREEN, display: 'flex', flexDirection: 'column', justifyContent: 'center', padding: 'clamp(48px, 7vw, 88px) clamp(24px, 5vw, 72px)' }}>
+          <div style={{ maxWidth: '520px' }}>
+            <div style={{ ...label, fontSize: '14px', color: PAPER, display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '20px' }}>
+              <span style={{ width: '7px', height: '7px', borderRadius: '50%', background: GREEN }} />
+              New season
             </div>
-          ))}
+            <h1 style={{ margin: 0, fontFamily: serif, fontStyle: 'italic', fontWeight: 400, fontSize: 'clamp(44px, 6vw, 80px)', lineHeight: 1.1, letterSpacing: '-0.025em', color: PAPER }}>
+              Everything you love, all in one place.
+            </h1>
+            <p style={{ margin: '22px 0 0', maxWidth: '420px', fontSize: '16px', lineHeight: 1.5, color: 'rgba(255,255,255,.8)' }}>
+              From fashion and electronics to home, beauty, and beyond — thousands of products, one checkout, delivered to your door.
+            </p>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '12px', marginTop: '32px' }}>
+              <Link to="/products" className="btn btn-shopnow" style={{ ...label, fontSize: '15px', padding: '13px 22px', borderRadius: '4px' }}>
+                Shop now
+              </Link>
+              <Link to="/products" className="btn btn-explore" style={{ ...label, fontSize: '15px', padding: '13px 22px', borderRadius: '4px' }}>
+                Explore
+              </Link>
+            </div>
+          </div>
+        </div>
+        {/* Right — full-bleed lifestyle image (static, non-floating) */}
+        <div className="media" style={{ position: 'relative', background: FOG, minHeight: '420px', overflow: 'hidden' }}>
+          <img
+            src="https://images.pexels.com/photos/13432286/pexels-photo-13432286.jpeg?auto=compress&cs=tinysrgb&w=1600"
+            alt="A happy customer receiving her delivery at the door"
+            style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }}
+          />
         </div>
       </section>
 
-      {/* ============ HOW IT WORKS ============ */}
-      <section id="how" data-howitworks style={{ position: 'relative', padding: 'clamp(70px, 10vw, 130px) clamp(20px, 5vw, 64px)', maxWidth: '1240px', margin: '0 auto' }}>
-        <div data-reveal style={{ ...revealStyle, textAlign: 'center', marginBottom: '70px' }}>
-          <div style={eyebrow}>How it works</div>
-          <h2 style={{ margin: 0, fontFamily: serif, fontWeight: 600, fontSize: 'clamp(34px, 6vw, 64px)', lineHeight: 1.02, letterSpacing: '-1.5px', color: '#0C2417' }}>From cart to door in three steps</h2>
+      {/* ============ PRODUCT MARQUEE (auto-scrolls left → right) ============ */}
+      <section style={{ background: CANVAS, padding: 'clamp(56px, 8vw, 80px) 0', overflow: 'hidden' }}>
+        <div style={{ ...container, marginBottom: '40px' }}>
+          <h2 data-reveal style={{ margin: 0, fontFamily: serif, fontStyle: 'italic', fontWeight: 400, fontSize: 'clamp(32px, 4.5vw, 48px)', lineHeight: 1.1, letterSpacing: '-0.02em', color: INK }}>
+            Explore our products —
+          </h2>
         </div>
 
-        <div style={{ position: 'relative' }}>
-          <svg viewBox="0 0 1000 160" preserveAspectRatio="none" style={{ position: 'absolute', top: '40px', left: 0, width: '100%', height: '120px', overflow: 'visible', pointerEvents: 'none' }}>
-            <defs>
-              <linearGradient id="shopit-line" x1="0" y1="0" x2="1" y2="0">
-                <stop offset="0%" stopColor="#22C55E" />
-                <stop offset="55%" stopColor="#16A34A" />
-                <stop offset="100%" stopColor="#15803D" />
-              </linearGradient>
-            </defs>
-            <path data-draw d="M 90 80 C 280 0, 380 150, 500 80 S 740 0, 910 80" fill="none" stroke="url(#shopit-line)" strokeWidth="3" strokeLinecap="round" style={{ filter: 'drop-shadow(0 0 6px rgba(34,197,94,.4))', opacity: 0.3 }} />
-          </svg>
-
-          <div style={{ position: 'relative', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '30px' }}>
-            {[
-              { n: '1', title: 'Browse', body: 'Explore thousands of products across every category.', color: '#16A34A', border: 'rgba(34,197,94,.55)', delay: 0 },
-              { n: '2', title: 'Add to cart', body: 'Save your favorites and check out in seconds.', color: '#22C55E', border: 'rgba(34,197,94,.6)', delay: 160 },
-              { n: '3', title: 'Delivered', body: 'Fast, tracked shipping right to your door.', color: '#15803D', border: 'rgba(21,128,61,.6)', delay: 320 },
-            ].map((s) => (
-              <div key={s.n} data-reveal data-delay={s.delay} style={{ ...revealStyle, textAlign: 'center' }}>
-                <div style={{ position: 'relative', width: '92px', height: '92px', margin: '0 auto 24px', borderRadius: '50%', background: '#FFFFFF', border: `2px dashed ${s.border}`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: serif, fontSize: '34px', fontWeight: 600, color: s.color, boxShadow: '0 10px 28px rgba(20,60,38,.10), 0 0 20px rgba(34,197,94,.15)' }}>{s.n}</div>
-                <h3 style={{ margin: '0 0 8px', fontFamily: serif, fontSize: '25px', fontWeight: 600, color: '#0C2417' }}>{s.title}</h3>
-                <p style={{ margin: '0 auto', maxWidth: '260px', fontSize: '15px', lineHeight: 1.6, color: '#5B7567' }}>{s.body}</p>
+        {/* Full-bleed track: two copies of the list slide continuously; the second
+            copy makes the loop seamless. Pauses on hover so items can be inspected. */}
+        <div className="marquee">
+          <div className="marquee-track">
+            {[...PRODUCTS, ...PRODUCTS].map((p, i) => (
+              <div key={`${p.id}-${i}`} style={{ flex: '0 0 auto', width: 'clamp(200px, 22vw, 260px)', paddingRight: 'clamp(24px, 3vw, 32px)' }}>
+                <ProductCard {...p} />
               </div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* ============ MARQUEE / TRENDING ============ */}
-      <section id="market" style={{ position: 'relative', padding: 'clamp(60px, 9vw, 110px) 0' }}>
-        <div data-reveal style={{ ...revealStyle, textAlign: 'center', padding: '0 clamp(20px, 5vw, 64px)', marginBottom: '52px' }}>
-          <div style={eyebrow}>Trending now</div>
-          <h2 style={{ margin: 0, fontFamily: serif, fontWeight: 600, fontSize: 'clamp(34px, 6vw, 64px)', lineHeight: 1.02, letterSpacing: '-1.5px', color: '#0C2417' }}>
-            What everyone's <span style={{ fontStyle: 'italic', background: 'linear-gradient(135deg, #16A34A, #22C55E)', WebkitBackgroundClip: 'text', backgroundClip: 'text', color: 'transparent' }}>buying.</span>
+      {/* ============ MANIFESTO (dark band) ============ */}
+      <section style={{ background: GREEN, padding: 'clamp(72px, 11vw, 128px) 0' }}>
+        <div style={{ ...container, textAlign: 'center' }}>
+          <p data-reveal style={{ ...label, fontSize: '14px', color: GREEN, marginBottom: '24px' }}>Our promise</p>
+          <h2 data-reveal style={{ margin: '0 auto', maxWidth: '900px', fontFamily: serif, fontStyle: 'italic', fontWeight: 400, fontSize: 'clamp(30px, 5vw, 64px)', lineHeight: 1.15, letterSpacing: '-0.025em', color: PAPER }}>
+            Everything you need. Nothing you don't.
+          </h2>
+          <div data-reveal style={{ marginTop: '40px' }}>
+            <Link to="/products" className="btn" style={{ ...label, fontSize: '15px', padding: '13px 22px', borderRadius: '4px', background: PAPER, color: GREEN, border: `1px solid ${PAPER}`, display: 'inline-block' }}>
+              Read the story
+            </Link>
+          </div>
+        </div>
+      </section>
+
+      {/* ============ STICKY STORY (pinned card + fading steps) ============ */}
+      <StickyStory />
+
+      {/* ============ BESTSELLERS MARQUEE (auto-scrolls right → left) ============ */}
+      <section style={{ background: CANVAS, padding: 'clamp(56px, 8vw, 80px) 0', overflow: 'hidden' }}>
+        <div style={{ ...container, marginBottom: '40px' }}>
+          <h2 data-reveal style={{ margin: 0, fontFamily: serif, fontStyle: 'italic', fontWeight: 400, fontSize: 'clamp(32px, 4.5vw, 48px)', lineHeight: 1.1, letterSpacing: '-0.02em', color: INK }}>
+            Bestsellers —
           </h2>
         </div>
 
-        <div style={{ position: 'relative', overflow: 'hidden', WebkitMaskImage: 'linear-gradient(90deg, transparent, #000 8%, #000 92%, transparent)', maskImage: 'linear-gradient(90deg, transparent, #000 8%, #000 92%, transparent)' }}>
-          <div style={{ display: 'flex', gap: '22px', width: 'max-content', animation: 'shopit-marquee 36s linear infinite', padding: '14px 11px' }}>
-            {TILES.map((t, i) => (
-              <div key={i} style={{ position: 'relative', flex: '0 0 auto', width: '230px', padding: '18px', borderRadius: '18px', background: '#FFFFFF', border: '1px solid rgba(34,197,94,.18)', boxShadow: '0 16px 40px rgba(20,60,38,.10)' }}>
-                <div style={{ height: '132px', borderRadius: '12px', background: 'repeating-linear-gradient(45deg, rgba(34,197,94,.07) 0 9px, rgba(34,197,94,.02) 9px 18px)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: mono, fontSize: '10px', letterSpacing: '1px', color: '#8AA394' }}>product shot</div>
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: '16px' }}>
-                  <div>
-                    <div style={{ fontFamily: serif, fontWeight: 600, fontSize: '18px', color: '#0C2417' }}>{t.name}</div>
-                    <div style={{ fontSize: '12.5px', color: '#5B7567', marginTop: '2px' }}>{t.cat}</div>
-                  </div>
-                  <div style={{ fontFamily: mono, fontSize: '11px', color: '#15803D', padding: '4px 9px', borderRadius: '999px', border: '1px solid rgba(34,197,94,.4)', background: 'rgba(34,197,94,.06)', whiteSpace: 'nowrap' }}>{t.tag}</div>
-                </div>
+        {/* Same seamless marquee, running the opposite direction to the row above. */}
+        <div className="marquee">
+          <div className="marquee-track-rev">
+            {[...PRODUCTS, ...PRODUCTS].map((p, i) => (
+              <div key={`${p.id}-${i}`} style={{ flex: '0 0 auto', width: 'clamp(200px, 22vw, 260px)', paddingRight: 'clamp(24px, 3vw, 32px)' }}>
+                <ProductCard {...p} />
               </div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* ============ SOCIAL PROOF ============ */}
-      <section id="reviews" style={{ position: 'relative', padding: 'clamp(70px, 10vw, 130px) clamp(20px, 5vw, 64px)', maxWidth: '1240px', margin: '0 auto' }}>
-        <div data-reveal style={{ ...revealStyle, textAlign: 'center', marginBottom: '60px' }}>
-          <div style={eyebrow}>Loved by shoppers</div>
-          <h2 style={{ margin: 0, fontFamily: serif, fontWeight: 600, fontSize: 'clamp(34px, 6vw, 64px)', lineHeight: 1.02, letterSpacing: '-1.5px', color: '#0C2417' }}>Trusted by thousands of shoppers.</h2>
-        </div>
-
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '28px', alignItems: 'start' }}>
-          {QUOTES.map((q) => (
-            <div key={q.name} data-reveal data-delay={q.delay} style={{ ...revealStyle, transform: 'translateY(46px)', marginTop: q.offset }}>
-              <div style={{ position: 'relative', padding: '32px 30px 30px', borderRadius: '20px', background: '#FFFFFF', border: '1px solid rgba(34,197,94,.2)', boxShadow: '0 20px 50px rgba(20,60,38,.10)', animation: 'shopit-floatY 9s ease-in-out infinite' }}>
-                <div style={{ fontFamily: mono, fontSize: '10px', letterSpacing: '2px', color: '#16A34A', marginBottom: '16px' }}>ADMIT · ONE</div>
-                <p style={{ margin: 0, fontFamily: serif, fontSize: '21px', lineHeight: 1.4, color: '#0C2417' }}>"{q.text}"</p>
-                <div style={{ position: 'relative', marginTop: '28px', paddingTop: '28px', borderTop: '2px dashed rgba(34,197,94,.35)' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '13px' }}>
-                    <div style={{ width: '44px', height: '44px', borderRadius: '50%', background: `linear-gradient(135deg, ${q.c1}, ${q.c2})`, boxShadow: '0 6px 16px rgba(22,163,74,.25)' }} />
-                    <div>
-                      <div style={{ fontWeight: 600, fontSize: '15px', color: '#0C2417' }}>{q.name}</div>
-                      <div style={{ fontSize: '13px', color: '#5B7567' }}>{q.shop}</div>
-                    </div>
-                  </div>
-                </div>
-              </div>
+      {/* ============ FOOTER (dark band) ============ */}
+      <footer style={{ background: GREEN, color: PAPER, padding: 'clamp(56px, 8vw, 80px) 0 40px' }}>
+        <div style={container}>
+          <div style={{ display: 'grid', gridTemplateColumns: '1.6fr 1fr 1fr 1fr', gap: 'clamp(24px, 4vw, 48px)' }}>
+            <div>
+              <Wordmark size={24} light />
+              <p style={{ margin: '18px 0 0', maxWidth: '280px', fontSize: '15px', lineHeight: 1.6, color: 'rgba(255,255,255,.65)' }}>
+                A gallery-grade store for everything you love — chosen with intent.
+              </p>
             </div>
-          ))}
-        </div>
-      </section>
-
-      {/* ============ CLOSING CTA ============ */}
-      <section id="start" style={{ position: 'relative', padding: 'clamp(40px, 6vw, 70px) clamp(20px, 5vw, 64px) clamp(80px, 10vw, 130px)' }}>
-        <div data-reveal style={{ ...revealStyle, transition: 'opacity 1s ease, transform 1s cubic-bezier(.2,.7,.2,1), filter 1s ease', position: 'relative', maxWidth: '1080px', margin: '0 auto', textAlign: 'center', padding: 'clamp(56px, 8vw, 96px) clamp(24px, 5vw, 72px)', borderRadius: '32px', overflow: 'hidden', background: 'radial-gradient(700px 400px at 30% 0%, rgba(34,197,94,.18), transparent 60%), radial-gradient(700px 500px at 80% 100%, rgba(21,128,61,.16), transparent 60%), linear-gradient(160deg, #EAF7EE, #FFFFFF)', border: '1px solid rgba(34,197,94,.28)', boxShadow: '0 40px 90px rgba(20,60,38,.14)' }}>
-          <div style={{ position: 'relative', width: '70%', maxWidth: '420px', margin: '0 auto 36px', borderTop: '2px dashed rgba(34,197,94,.6)', boxShadow: '0 0 12px rgba(34,197,94,.3)' }} />
-          <div style={eyebrow}>Limited-time offers</div>
-          <h2 style={{ margin: 0, fontFamily: serif, fontWeight: 600, fontSize: 'clamp(36px, 7vw, 82px)', lineHeight: 1, letterSpacing: '-2px', color: '#0C2417' }}>
-            Deals ending <span style={{ fontStyle: 'italic', background: 'linear-gradient(135deg, #16A34A, #22C55E)', WebkitBackgroundClip: 'text', backgroundClip: 'text', color: 'transparent' }}>soon.</span>
-          </h2>
-          <p style={{ margin: '24px auto 40px', maxWidth: '480px', fontSize: '18px', lineHeight: 1.6, color: '#5B7567' }}>Offers across every category — don't miss out.</p>
-          <Link to="/products" data-magnetic style={{ display: 'inline-flex', alignItems: 'center', gap: '10px', padding: '19px 40px', borderRadius: '999px', background: 'linear-gradient(135deg, #22C55E, #15803D)', color: '#fff', fontWeight: 600, fontSize: '17.5px', boxShadow: '0 12px 32px rgba(22,163,74,.35)' }}>
-            Start Shopping Now <span style={{ fontSize: '19px' }}>→</span>
-          </Link>
-        </div>
-      </section>
-
-      {/* ============ FOOTER ============ */}
-      <footer style={{ position: 'relative', borderTop: '1px solid rgba(34,197,94,.18)', background: 'linear-gradient(180deg, rgba(246,250,247,0), rgba(236,245,239,.7))', padding: 'clamp(50px, 7vw, 80px) clamp(20px, 5vw, 64px) 44px' }}>
-        <div style={{ maxWidth: '1240px', margin: '0 auto', display: 'grid', gridTemplateColumns: '1.6fr 1fr 1fr 1fr', gap: '40px' }}>
-          <div>
-            <Wordmark size={28} />
-            <p style={{ margin: '18px 0 0', maxWidth: '280px', fontSize: '14.5px', lineHeight: 1.6, color: '#5B7567' }}>Your everyday store for everything you love.</p>
+            <FooterCol title="Shop" links={[['Categories', '/products'], ['New arrivals', '/products'], ['Deals', '/products']]} />
+            <FooterCol title="Help" links={[['Support', '#'], ['Returns', '#'], ['Shipping', '#']]} />
+            <FooterCol title="Company" links={[['About', '#'], ['Privacy', '#'], ['Contact', '#']]} />
           </div>
-          <FooterCol title="Shop" links={[['Categories', '/products'], ['Deals', '/products'], ['New arrivals', '/products']]} />
-          <FooterCol title="Help" links={[['Support', '#'], ['Returns', '#'], ['Shipping', '#']]} />
-          <FooterCol title="Company" links={[['About', '#'], ['Privacy Policy', '#'], ['Contact', '#']]} />
-        </div>
-        <div style={{ maxWidth: '1240px', margin: '48px auto 0', paddingTop: '24px', borderTop: '1px solid rgba(34,197,94,.14)', display: 'flex', flexWrap: 'wrap', gap: '12px', justifyContent: 'space-between', fontSize: '13px', color: '#8AA394' }}>
-          <span>© 2026 Shopit. Shop anywhere, anytime.</span>
-          <span style={{ fontFamily: mono, letterSpacing: '1px' }}>ADMIT · ONE</span>
+          <div style={{ marginTop: '48px', paddingTop: '24px', borderTop: '1px solid rgba(255,255,255,.14)', display: 'flex', flexWrap: 'wrap', gap: '12px', justifyContent: 'space-between', ...label, fontSize: '12px', color: 'rgba(255,255,255,.5)' }}>
+            <span>© 2026 Shopit</span>
+            <span>Shop anywhere, anytime</span>
+          </div>
         </div>
       </footer>
     </div>
   );
 }
 
-function Wordmark({ size }: { size: number }) {
+// Sticky-story section: pinned card on the right, fading steps on the left.
+// The active step is whichever one currently crosses the viewport centre — a
+// thin centre band via rootMargin. The pinned card cross-fades to its image.
+function StickyStory() {
+  const [active, setActive] = useState(0);
+  const stepsRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const root = stepsRef.current;
+    if (!root) return;
+    const io = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((en) => {
+          if (en.isIntersecting) setActive(Number((en.target as HTMLElement).dataset.step));
+        });
+      },
+      // thin band across the vertical centre — a step is "active" while it overlaps it
+      { threshold: 0, rootMargin: '-45% 0px -45% 0px' },
+    );
+    root.querySelectorAll<HTMLElement>('[data-step]').forEach((el) => io.observe(el));
+    return () => io.disconnect();
+  }, []);
+
   return (
-    <div style={{ display: 'flex', alignItems: 'baseline', gap: '2px', fontFamily: serif, fontWeight: 600, fontSize: `${size}px`, letterSpacing: '-.5px', color: '#0C2417' }}>
+    <section style={{ background: CANVAS, padding: 'clamp(40px, 6vw, 72px) 0' }}>
+      <div style={container}>
+        <div className="story-grid">
+          {/* LEFT — steps that fade/rise as they reach the centre */}
+          <div ref={stepsRef}>
+            {STORY.map((s, i) => (
+              <div
+                key={s.tag}
+                data-step={i}
+                className="story-step"
+                style={{ opacity: active === i ? 1 : 0.25, transform: active === i ? 'none' : 'translateY(24px)' }}
+                aria-hidden={active !== i}
+              >
+                <div style={{ maxWidth: '440px' }}>
+                  <p style={{ ...label, fontSize: '14px', color: GREEN, marginBottom: '16px' }}>
+                    {String(i + 1).padStart(2, '0')} — {s.tag}
+                  </p>
+                  <h2 style={{ margin: 0, fontFamily: serif, fontStyle: 'italic', fontWeight: 400, fontSize: 'clamp(32px, 4.5vw, 56px)', lineHeight: 1.1, letterSpacing: '-0.025em', color: INK }}>
+                    {s.title}
+                  </h2>
+                  <p style={{ margin: '20px 0 0', fontSize: '16px', lineHeight: 1.5, color: MUTED }}>{s.body}</p>
+                  {i === STORY.length - 1 && (
+                    <div style={{ marginTop: '30px' }}>
+                      <Link to="/products" className="btn" style={{ ...label, fontSize: '15px', padding: '13px 24px', borderRadius: '4px', background: GREEN, color: PAPER, display: 'inline-flex', alignItems: 'center', gap: '10px' }}>
+                        Start shopping <ArrowRight size={17} />
+                      </Link>
+                    </div>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* RIGHT — pinned card, cross-fading between step images */}
+          <div className="story-sticky">
+            <div className="story-card">
+              {STORY.map((s, i) => (
+                <img
+                  key={s.tag}
+                  src={photo(s.keywords, s.seed, 900, 1100)}
+                  alt={s.title}
+                  loading="lazy"
+                  style={{ opacity: active === i ? 1 : 0 }}
+                />
+              ))}
+              {/* progress dots */}
+              <div style={{ position: 'absolute', bottom: '16px', left: '50%', transform: 'translateX(-50%)', display: 'flex', gap: '8px', zIndex: 2 }}>
+                {STORY.map((s, i) => (
+                  <span key={s.tag} style={{ width: active === i ? '20px' : '8px', height: '8px', borderRadius: '9999px', background: active === i ? PAPER : 'rgba(255,255,255,.55)', transition: 'width .3s ease, background .3s ease' }} />
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+// Flat, borderless, shadowless product card — separated by whitespace alone.
+function ProductCard({ id, keywords, name, brand, price, badge }: Product) {
+  return (
+    <Link to="/products" className="card" style={{ display: 'block', background: 'transparent' }}>
+      <div style={{ position: 'relative', aspectRatio: '1 / 1', background: FOG, borderRadius: '8px', overflow: 'hidden' }}>
+        <img className="ph" src={photo(keywords, id)} alt={name} loading="lazy" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+        {badge && (
+          <span
+            style={{
+              position: 'absolute',
+              top: '8px',
+              left: '8px',
+              ...label,
+              fontSize: '12px',
+              color: PAPER,
+              background: badge === 'SALE' ? GREEN : '#4E4E4E',
+              padding: '3px 8px',
+              borderRadius: '9999px',
+            }}
+          >
+            {badge}
+          </span>
+        )}
+      </div>
+      <div style={{ paddingTop: '12px' }}>
+        <div style={{ fontSize: '16px', fontWeight: 700, color: INK }}>{name}</div>
+        <div style={{ fontSize: '14px', color: MUTED, marginTop: '4px' }}>{brand}</div>
+        <div style={{ fontSize: '16px', color: INK, marginTop: '8px' }}>{price}</div>
+      </div>
+    </Link>
+  );
+}
+
+// The Shopit "Shop | it" wordmark — accent stays green.
+function Wordmark({ size, light = false }: { size: number; light?: boolean }) {
+  return (
+    <div style={{ display: 'flex', alignItems: 'baseline', gap: '2px', fontFamily: serif, fontWeight: 600, fontSize: `${size}px`, letterSpacing: '-.5px', color: light ? PAPER : INK, lineHeight: 1 }}>
       <span>Shop</span>
-      <span style={{ display: 'inline-flex', alignItems: 'stretch', height: '22px', margin: '0 3px', borderLeft: '2px dashed rgba(34,197,94,.85)', boxShadow: '0 0 8px rgba(34,197,94,.4)', alignSelf: 'center' }} />
-      <span style={{ background: 'linear-gradient(135deg, #16A34A, #15803D)', WebkitBackgroundClip: 'text', backgroundClip: 'text', color: 'transparent' }}>it</span>
+      <span
+        style={{
+          display: 'inline-flex',
+          alignItems: 'stretch',
+          height: `${size * 0.82}px`,
+          margin: '0 3px',
+          borderLeft: `2px dashed ${light ? 'rgba(120,197,150,.9)' : 'rgba(47,111,79,.85)'}`,
+          alignSelf: 'center',
+        }}
+      />
+      <span style={{ color: GREEN }}>it</span>
     </div>
   );
 }
@@ -483,14 +504,14 @@ function Wordmark({ size }: { size: number }) {
 function FooterCol({ title, links }: { title: string; links: Array<[string, string]> }) {
   return (
     <div>
-      <div style={{ fontFamily: mono, fontSize: '10.5px', letterSpacing: '2px', textTransform: 'uppercase', color: '#8AA394', marginBottom: '16px' }}>{title}</div>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '11px', fontSize: '14.5px' }}>
-        {links.map(([label, to]) =>
+      <div style={{ ...label, fontSize: '13px', color: 'rgba(255,255,255,.9)', marginBottom: '16px' }}>{title}</div>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '11px', fontSize: '15px' }}>
+        {links.map(([lbl, to]) =>
           to.startsWith('/') ? (
-            <Link key={label} to={to} style={{ color: '#5B7567' }}>{label}</Link>
+            <Link key={lbl} to={to} className="navlink" style={{ color: 'rgba(255,255,255,.65)' }}>{lbl}</Link>
           ) : (
-            <a key={label} href={to} style={{ color: '#5B7567' }}>{label}</a>
-          )
+            <a key={lbl} href={to} className="navlink" style={{ color: 'rgba(255,255,255,.65)' }}>{lbl}</a>
+          ),
         )}
       </div>
     </div>

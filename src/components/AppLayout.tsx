@@ -10,6 +10,8 @@ import {
   ArrowLeft,
   ShoppingCart,
   PackageSearch,
+  Camera,
+  LogIn,
 } from 'lucide-react';
 import { Sidebar, SidebarBody, SidebarLink, useSidebar } from './ui/sidebar';
 import { useAuth } from '../context/AuthContext';
@@ -33,22 +35,43 @@ const sellerLinks: NavItem[] = [
 
 const customerLinks: NavItem[] = [
   { label: 'Browse', href: '/products', icon: PackageSearch },
+  { label: 'Search by Photo', href: '/visual-search', icon: Camera },
   { label: 'My Orders', href: '/orders', icon: ShoppingBag },
   { label: 'Cart', href: '/cart', icon: ShoppingCart },
 ];
 
-// Brand mark at the top of the sidebar. Label fades in only when expanded.
-function Brand({ label, href }: { label: string; href: string }) {
+// Guests can browse and fill a cart freely; only order history (which needs a
+// buyer account) is hidden until they sign in.
+const guestLinks: NavItem[] = [
+  { label: 'Browse', href: '/products', icon: PackageSearch },
+  { label: 'Search by Photo', href: '/visual-search', icon: Camera },
+  { label: 'Cart', href: '/cart', icon: ShoppingCart },
+];
+
+// Brand mark. A compact green "S" logomark stays visible in BOTH states (folded
+// + expanded); when expanded, the full landing-page "Shop·it" wordmark (and any
+// suffix) reveals to the right.
+function Brand({ href, suffix }: { href: string; suffix?: string }) {
   const { open, animate } = useSidebar();
+  const show = animate ? open : true;
   return (
-    <Link to={href} className="relative z-20 flex items-center gap-3 py-1 text-sm font-normal">
-      <div className="h-7 w-7 shrink-0 rounded-lg" style={{ background: GREEN }} />
+    <Link to={href} className="relative z-20 flex items-center gap-2 py-1">
+      {/* Logomark — always visible, fits the 70px rail */}
+      <span className="h-7 w-7 shrink-0 rounded-lg" style={{ background: GREEN }} />
+      {/* Wordmark — reveals only when expanded */}
       <motion.span
-        animate={{ opacity: animate ? (open ? 1 : 0) : 1, display: animate ? (open ? 'inline-block' : 'none') : 'inline-block' }}
-        className="whitespace-pre"
-        style={{ color: INK, fontFamily: "'Fraunces', serif", fontWeight: 600, fontSize: '17px' }}
+        animate={{ opacity: show ? 1 : 0, display: show ? 'inline-flex' : 'none' }}
+        className="items-center whitespace-pre"
+        style={{ fontFamily: "'Fraunces', serif", fontWeight: 600, fontSize: '20px', letterSpacing: '-0.5px', lineHeight: 1 }}
       >
-        {label}
+        <span style={{ color: INK }}>Shop</span>
+        <span style={{ height: '15px', margin: '0 3px', borderLeft: '2px dashed rgba(47,111,79,.85)', alignSelf: 'center' }} />
+        <span style={{ color: GREEN }}>it</span>
+        {suffix && (
+          <span style={{ color: '#8A8273', fontSize: '12px', fontWeight: 700, marginLeft: '8px', letterSpacing: '0.06em', textTransform: 'uppercase', alignSelf: 'center' }}>
+            {suffix}
+          </span>
+        )}
       </motion.span>
     </Link>
   );
@@ -60,10 +83,10 @@ function SidebarContent() {
   const { itemCount } = useCart();
 
   const isSeller = user?.role === 'Seller';
-  const links = isSeller ? sellerLinks : customerLinks;
-  const brand = isSeller
-    ? { label: 'Shopit Seller', href: '/seller' }
-    : { label: 'Shopit', href: '/products' };
+  const links = isSeller ? sellerLinks : user ? customerLinks : guestLinks;
+  const brand: { href: string; suffix?: string } = isSeller
+    ? { href: '/seller', suffix: 'Seller' }
+    : { href: '/products' };
 
   // A dashboard-style root ('/seller') is active only on an exact match; the
   // rest highlight when the path starts with their href.
@@ -76,7 +99,7 @@ function SidebarContent() {
   return (
     <SidebarBody className="justify-between gap-10 bg-[#F2FFDF] border-r border-[#E4DCC9]">
       <div className="flex flex-1 flex-col overflow-x-hidden overflow-y-auto">
-        <Brand label={brand.label} href={brand.href} />
+        <Brand href={brand.href} suffix={brand.suffix} />
         <div className="mt-8 flex flex-col gap-1">
           {links.map((item) => {
             const active = isActive(item.href);
@@ -111,37 +134,59 @@ function SidebarContent() {
             );
           })}
 
-          {/* Logout — an action rather than navigation. */}
-          <SidebarLink
-            link={{
-              label: 'Log out',
-              href: '/login',
-              icon: <ArrowLeft className={iconClass} style={{ color: '#5c5648' }} />,
-            }}
-            onClick={() => logout()}
-            className="rounded-lg px-2 transition-colors hover:bg-[#F2ECDD]"
-            style={{ color: INK }}
-          />
+          {/* Logout — an action rather than navigation. Only for signed-in users. */}
+          {user && (
+            <SidebarLink
+              link={{
+                label: 'Log out',
+                href: '/login',
+                icon: <ArrowLeft className={iconClass} style={{ color: '#5c5648' }} />,
+              }}
+              onClick={() => logout()}
+              className="rounded-lg px-2 transition-colors hover:bg-[#F2ECDD]"
+              style={{ color: INK }}
+            />
+          )}
         </div>
       </div>
 
-      {/* User profile pinned to the bottom (initials avatar + name → Account). */}
-      <SidebarLink
-        link={{
-          label: fullName,
-          href: '/account',
-          icon: (
-            <div
-              className="h-7 w-7 shrink-0 rounded-full flex items-center justify-center text-white"
-              style={{ background: GREEN, fontSize: '13px', fontWeight: 500, fontFamily: "'Inter', sans-serif" }}
-            >
-              {initial}
-            </div>
-          ),
-        }}
-        className="rounded-lg px-2"
-        style={{ color: INK, fontWeight: 500 }}
-      />
+      {/* Pinned to the bottom: profile (→ Account) when signed in, otherwise a
+          sign-in prompt for guests. */}
+      {user ? (
+        <SidebarLink
+          link={{
+            label: fullName,
+            href: '/account',
+            icon: (
+              <div
+                className="h-7 w-7 shrink-0 rounded-full flex items-center justify-center text-white"
+                style={{ background: GREEN, fontSize: '13px', fontWeight: 500, fontFamily: "'Inter', sans-serif" }}
+              >
+                {initial}
+              </div>
+            ),
+          }}
+          className="rounded-lg px-2"
+          style={{ color: INK, fontWeight: 500 }}
+        />
+      ) : (
+        <SidebarLink
+          link={{
+            label: 'Sign in',
+            href: '/login',
+            icon: (
+              <div
+                className="h-7 w-7 shrink-0 rounded-full flex items-center justify-center text-white"
+                style={{ background: GREEN }}
+              >
+                <LogIn className="h-4 w-4" />
+              </div>
+            ),
+          }}
+          className="rounded-lg px-2"
+          style={{ color: INK, fontWeight: 500 }}
+        />
+      )}
     </SidebarBody>
   );
 }

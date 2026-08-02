@@ -11,6 +11,14 @@ import {
   removeCoupon,
 } from '../api/cartApi';
 import type { CartItem } from '../types/cart';
+import { useAuth } from '../context/AuthContext';
+import { useCart } from '../context/CartContext';
+import {
+  getGuestCart,
+  setGuestCartQty,
+  removeFromGuestCart,
+  type GuestCartItem,
+} from '../lib/guestCart';
 import { EmptyState } from '../components/EmptyState';
 import { Skeleton } from '../components/Skeleton';
 
@@ -28,7 +36,7 @@ function formatPrice(price: number): string {
   return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(price);
 }
 
-function CartPage() {
+function ServerCart() {
   const queryClient = useQueryClient();
   const [couponInput, setCouponInput] = useState('');
   const [pendingQty, setPendingQty] = useState<Record<number, 'inc' | 'dec'>>({});
@@ -276,6 +284,164 @@ function CartPage() {
       </div>
     </div>
   );
+}
+
+// Guest cart — backed by localStorage. Mirrors the server cart's layout but with
+// client-side quantity math and no coupons (those need an account). "Proceed to
+// checkout" routes into the protected checkout, which prompts sign-in; the local
+// cart is merged into the real cart right after login.
+function GuestCartView() {
+  const { setItemCount } = useCart();
+  const [items, setItems] = useState<GuestCartItem[]>(() => getGuestCart());
+
+  function sync() {
+    const next = getGuestCart();
+    setItems(next);
+    setItemCount(next.reduce((sum, i) => sum + i.quantity, 0));
+  }
+
+  function changeQty(productId: number, quantity: number) {
+    setGuestCartQty(productId, quantity);
+    sync();
+  }
+
+  function remove(productId: number) {
+    removeFromGuestCart(productId);
+    sync();
+    toast.success('Item removed.');
+  }
+
+  if (items.length === 0) {
+    return (
+      <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: '#FBF7F0' }}>
+        <EmptyState
+          icon={<ShoppingCart size={64} color="#D9CFC0" />}
+          title="Your cart is empty"
+          ctaLabel="Shop Now"
+          ctaTo="/products"
+        />
+      </div>
+    );
+  }
+
+  const storeGroups = items.reduce<Record<number, { storeName: string; storeSlug: string; items: GuestCartItem[] }>>((acc, item) => {
+    if (!acc[item.storeId]) {
+      acc[item.storeId] = { storeName: item.storeName, storeSlug: item.storeSlug, items: [] };
+    }
+    acc[item.storeId].items.push(item);
+    return acc;
+  }, {});
+
+  const subtotal = items.reduce((sum, i) => sum + i.unitPrice * i.quantity, 0);
+
+  return (
+    <div className="min-h-screen" style={{ backgroundColor: '#FBF7F0' }}>
+      <div className="max-w-5xl mx-auto px-6 py-10">
+        <h1 className="text-3xl mb-8" style={{ color: '#1F2A24', fontFamily: "'Fraunces', serif", fontWeight: 500 }}>
+          Your cart
+        </h1>
+
+        <div className="flex flex-col lg:flex-row gap-8">
+          <div className="flex-1 flex flex-col gap-6">
+            {Object.entries(storeGroups).map(([storeId, group]) => (
+              <div key={storeId}>
+                <div className="flex items-center gap-2 mb-3">
+                  <span style={labelMono}>Sold by</span>
+                  <Link
+                    to={`/stores/${group.storeSlug}`}
+                    className="text-sm font-medium hover:underline"
+                    style={{ color: '#D97B3F', fontFamily: "'IBM Plex Mono', monospace", fontSize: '12px', textTransform: 'uppercase', letterSpacing: '0.1em' }}
+                  >
+                    {group.storeName}
+                  </Link>
+                </div>
+
+                <div className="flex flex-col gap-3">
+                  {group.items.map((item) => (
+                    <div key={item.productId} className="flex items-center gap-4 p-4 rounded-lg" style={{ backgroundColor: '#FFFFFF', border: '1px solid #E4DCC9' }}>
+                      <div className="w-16 h-16 rounded flex items-center justify-center flex-shrink-0" style={{ backgroundColor: '#F0ECE2' }}>
+                        <span style={labelMono}>IMG</span>
+                      </div>
+
+                      <div className="flex-1 min-w-0">
+                        <Link to={`/products/${item.productId}`} className="text-sm font-medium hover:underline truncate block" style={inkText}>
+                          {item.productName}
+                        </Link>
+                        <p className="text-sm mt-1" style={mutedText}>{formatPrice(item.unitPrice)} each</p>
+                      </div>
+
+                      <div className="flex items-center gap-2">
+                        <button
+                          onClick={() => changeQty(item.productId, item.quantity - 1)}
+                          className="w-8 h-8 rounded flex items-center justify-center"
+                          style={{ border: '1px solid #E4DCC9', backgroundColor: '#FBF7F0' }}
+                        >
+                          <span style={inkText}>−</span>
+                        </button>
+                        <input type="number" value={item.quantity} readOnly className="w-10 text-center text-sm rounded" style={{ border: '1px solid #E4DCC9', backgroundColor: '#FFFFFF', ...inkText }} />
+                        <button
+                          onClick={() => changeQty(item.productId, item.quantity + 1)}
+                          className="w-8 h-8 rounded flex items-center justify-center"
+                          style={{ border: '1px solid #E4DCC9', backgroundColor: '#FBF7F0' }}
+                        >
+                          <span style={inkText}>+</span>
+                        </button>
+                      </div>
+
+                      <p className="text-sm font-medium w-20 text-right" style={inkText}>{formatPrice(item.unitPrice * item.quantity)}</p>
+
+                      <button onClick={() => remove(item.productId)} className="ml-2">
+                        <Trash2 size={16} color="#8A8273" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+
+                <div className="flex justify-end mt-2 pr-1">
+                  <span style={{ ...mutedText, fontSize: '13px' }}>
+                    Store subtotal: {formatPrice(group.items.reduce((s, i) => s + i.unitPrice * i.quantity, 0))}
+                  </span>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <div className="lg:w-72 h-fit p-6 rounded-lg" style={{ backgroundColor: '#FFFFFF', border: '1px solid #E4DCC9' }}>
+            <h2 className="text-lg mb-4" style={{ color: '#1F2A24', fontFamily: "'Fraunces', serif", fontWeight: 500 }}>Order summary</h2>
+
+            <div className="flex flex-col gap-3">
+              <div className="flex justify-between text-sm" style={inkText}>
+                <span style={mutedText}>Subtotal</span>
+                <span>{formatPrice(subtotal)}</span>
+              </div>
+
+              <div className="flex justify-between pt-3 mt-1" style={{ borderTop: '1px solid #E4DCC9' }}>
+                <span className="text-base font-medium" style={inkText}>Total</span>
+                <span className="text-lg font-medium" style={{ color: '#1F2A24', fontFamily: "'Fraunces', serif" }}>{formatPrice(subtotal)}</span>
+              </div>
+            </div>
+
+            <Link
+              to="/checkout"
+              className="mt-6 w-full block text-center px-6 py-3 rounded-md text-sm"
+              style={{ backgroundColor: '#2F6F4F', color: '#FFFFFF', fontFamily: "'Inter', sans-serif" }}
+            >
+              Proceed to checkout
+            </Link>
+            <p className="mt-3 text-center" style={{ ...mutedText, fontSize: '12px' }}>
+              Sign in at checkout to apply coupons and place your order.
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// Signed-in shoppers use the real server cart; guests get the local one.
+function CartPage() {
+  const { user } = useAuth();
+  return user ? <ServerCart /> : <GuestCartView />;
 }
 
 export default CartPage;

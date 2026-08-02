@@ -206,7 +206,7 @@ function AdminCategoriesPage() {
             <h1 style={{ fontFamily: "'Fraunces', serif", fontWeight: 600, fontSize: '34px', margin: 0, lineHeight: 1 }}>Categories</h1>
           </div>
           <div style={{ display: 'flex', gap: '10px', flex: 'none' }}>
-            <button onClick={openAdd} style={{ fontFamily: "'Inter', sans-serif", fontSize: '13px', fontWeight: 600, color: '#fff', background: '#1F2A24', border: '1px solid #1F2A24', borderRadius: '11px', padding: '11px 18px', cursor: 'pointer', whiteSpace: 'nowrap' }}>+ Add Category</button>
+            <button onClick={openAdd} style={{ fontFamily: "'Inter', sans-serif", fontSize: '13px', fontWeight: 600, color: '#fff', background: '#2F6F4F', border: '1px solid #2F6F4F', borderRadius: '11px', padding: '11px 18px', cursor: 'pointer', whiteSpace: 'nowrap' }}>+ Add Category</button>
           </div>
         </div>
 
@@ -289,7 +289,7 @@ function AdminCategoriesPage() {
 
             <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', borderTop: '1px solid #F1EAD9', paddingTop: '20px' }}>
               <button onClick={closeEdit} disabled={saveMutation.isPending} style={{ fontFamily: "'Inter', sans-serif", fontSize: '13px', fontWeight: 500, color: '#1F2A24', background: '#fff', border: '1px solid #E4DCC9', borderRadius: '11px', padding: '11px 18px', cursor: 'pointer' }}>Cancel</button>
-              <button onClick={handleSave} disabled={saveMutation.isPending} style={{ display: 'flex', alignItems: 'center', gap: '8px', fontFamily: "'Inter', sans-serif", fontSize: '13px', fontWeight: 600, color: '#fff', background: '#1F2A24', opacity: saveMutation.isPending ? 0.7 : 1, border: '1px solid #1F2A24', borderRadius: '11px', padding: '11px 20px', cursor: saveMutation.isPending ? 'wait' : 'pointer' }}>
+              <button onClick={handleSave} disabled={saveMutation.isPending} style={{ display: 'flex', alignItems: 'center', gap: '8px', fontFamily: "'Inter', sans-serif", fontSize: '13px', fontWeight: 600, color: '#fff', background: '#2F6F4F', opacity: saveMutation.isPending ? 0.7 : 1, border: '1px solid #2F6F4F', borderRadius: '11px', padding: '11px 20px', cursor: saveMutation.isPending ? 'wait' : 'pointer' }}>
                 {saveMutation.isPending && <Loader2 size={12} className="animate-spin" />}
                 {saveMutation.isPending ? 'Saving…' : 'Save Category'}
               </button>

@@ -1,8 +1,10 @@
+import { useState } from 'react';
 import { Star } from 'lucide-react';
 import { motion, useReducedMotion } from 'motion/react';
 import type { Product } from '../types/product';
 import { Link, useNavigate } from 'react-router-dom';
 import { fadeUp, softSpring } from '../lib/motion';
+import { getProductImageUrl } from '../lib/productImage';
 
 // A router Link that also accepts motion props, so the whole card can lift and
 // press as one element while staying a real navigable anchor.
@@ -33,28 +35,29 @@ export function ProductCard({ product, view = 'grid' }: ProductCardProps) {
   const stockBadge = getStockBadge(product.stockQuantity);
   const navigate = useNavigate();
   const prefersReduced = useReducedMotion();
+  const [imageFailed, setImageFailed] = useState(false);
 
   // Physical hover lift + press. Skipped entirely when reduced motion is asked for.
   const hover = prefersReduced ? undefined : { y: -4, boxShadow: '0 14px 30px rgba(31, 42, 36, 0.12)' };
   const tap = prefersReduced ? undefined : { scale: 0.985 };
 
-  const image = (
-    <>
-      {product.imageUrl ? (
-        <img
-          src={product.imageUrl}
-          alt={product.name}
-          className="w-full h-full object-cover transition-transform duration-500 ease-out group-hover:scale-[1.05] motion-reduce:transform-none motion-reduce:transition-none"
-        />
-      ) : (
-        <span
-          className="text-[11px] uppercase tracking-[0.18em]"
-          style={{ color: '#A8A092', fontFamily: "'IBM Plex Mono', monospace" }}
-        >
-          No Image
-        </span>
-      )}
-    </>
+  const image = imageFailed ? (
+    <span
+      className="text-[11px] uppercase tracking-[0.18em]"
+      style={{ color: '#A8A092', fontFamily: "'IBM Plex Mono', monospace" }}
+    >
+      No Image
+    </span>
+  ) : (
+    <img
+      src={getProductImageUrl(product)}
+      alt={product.name}
+      loading="lazy"
+      className="w-full h-full object-cover transition-transform duration-500 ease-out group-hover:scale-[1.05] motion-reduce:transform-none motion-reduce:transition-none"
+      // If even the keyword photo fails to load, fall back to the plain label
+      // so the card never shows a broken-image icon.
+      onError={() => setImageFailed(true)}
+    />
   );
 
   const storeLink = product.storeName && product.storeSlug && (

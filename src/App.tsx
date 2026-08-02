@@ -2,6 +2,24 @@
 import { Loader2 } from 'lucide-react';
 import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { Navbar } from './components/Navbar';
+import LandingPage from './pages/LandingPage';
+import LoginPage from './pages/LoginPage';
+import RegisterPage from './pages/RegisterPage';
+import ForgotPasswordPage from './pages/ForgotPasswordPage';
+import ProductListingPage from './pages/ProductListingPage';
+import ProductDetailPage from './pages/ProductDetailPage';
+import VisualSearchPage from './pages/VisualSearchPage';
+import GoogleCallbackPage from './pages/GoogleCallbackPage';
+import AccountPage from './pages/AccountPage';
+import Dashboard from './pages/Dashboard';
+import SellerRegisterPage from './pages/SellerRegisterPage';
+import StorefrontPage from './pages/StorefrontPage';
+import MyOrdersPage from './pages/MyOrdersPage';
+import MyStoresPage from './pages/MyStoresPage';
+import SellerProductsPage from './pages/SellerProductsPage';
+import SellerProductFormPage from './pages/SellerProductFormPage';
+import SellerOrdersPage from './pages/SellerOrdersPage';
+import SellerFlaggedReviewsPage from './pages/SellerFlaggedReviewsPage';
 import { ProtectedRoute } from './components/ProtectedRoute';
 import { AdminRoute } from './components/AdminRoute';
 import { SellerRoute } from './components/SellerRoute';
@@ -53,7 +71,7 @@ const HIDDEN_NAVBAR_PATHS = ['/', '/login', '/register', '/forgot-password', '/a
 // Route prefixes rendered inside AppLayout (customer + seller). These own their
 // own full-height sidebar, so the global top navbar is hidden on them. Admin and
 // public pages (storefront, /sell) keep the top navbar.
-const SIDEBAR_LAYOUT_PREFIXES = ['/products', '/account', '/dashboard', '/cart', '/checkout', '/orders', '/seller'];
+const SIDEBAR_LAYOUT_PREFIXES = ['/products', '/visual-search', '/account', '/dashboard', '/cart', '/checkout', '/orders', '/seller'];
 
 function App() {
   const location = useLocation();
@@ -78,8 +96,8 @@ function App() {
         <Route path="/auth/google/callback" element={<GoogleCallbackPage />} />
         <Route path="/sell" element={<SellerRegisterPage />} />
         <Route path="/stores/:slug" element={<StorefrontPage />} />
+        {/* Admin console — sign-in + admin role required. Keeps the top navbar. */}
         <Route element={<ProtectedRoute />}>
-          {/* Admin keeps its own console (AdminTabs) and the top navbar. */}
           <Route element={<AdminRoute />}>
             <Route path="/admin" element={<Navigate to="/admin/dashboard" replace />} />
             <Route path="/admin/dashboard" element={<AdminDashboardPage />} />
@@ -92,14 +110,22 @@ function App() {
             <Route path="/admin/payments" element={<AdminPaymentsPage />} />
             <Route path="/admin/reviews" element={<AdminReviewsPage />} />
           </Route>
+        </Route>
 
-          {/* Customers and sellers share the full-height sidebar layout. */}
-          <Route element={<AppLayout />}>
-            <Route path="/products" element={<ProductListingPage />} />
-            <Route path="/products/:id" element={<ProductDetailPage />} />
+        {/* Full-height sidebar layout. Browsing the catalog is fully public;
+            anything tied to a buyer account (cart, checkout, orders, account,
+            seller tools) sits behind ProtectedRoute so it prompts sign-in. */}
+        <Route element={<AppLayout />}>
+          {/* Public — no login needed to browse or fill a cart. */}
+          <Route path="/products" element={<ProductListingPage />} />
+          <Route path="/products/:id" element={<ProductDetailPage />} />
+          <Route path="/visual-search" element={<VisualSearchPage />} />
+          <Route path="/cart" element={<CartPage />} />
+
+          {/* Requires sign-in — checkout, orders and account areas. */}
+          <Route element={<ProtectedRoute />}>
             <Route path="/account" element={<AccountPage />} />
             <Route path="/dashboard" element={<Dashboard />} />
-            <Route path="/cart" element={<CartPage />} />
             <Route path="/checkout" element={<CheckoutPage />} />
             <Route path="/orders/:id" element={<OrderDetailPage />} />
             <Route path="/orders/:id/confirmation" element={<OrderConfirmationPage />} />

@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
-import { motion, useReducedMotion } from 'motion/react';
+import { useNavigate } from 'react-router-dom';
+import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
 import { useQuery } from '@tanstack/react-query';
 import { LayoutGrid, List, Sparkles } from 'lucide-react';
 import { fetchCategories, fetchProducts, fetchSemanticProducts } from '../api/productsApi';
@@ -8,9 +9,18 @@ import { staggerContainer } from '../lib/motion';
 import { ProductCard, type ProductView } from '../components/ProductCard';
 import { ProductCardSkeleton } from '../components/ProductCardSkeleton';
 import { Pagination } from '../components/Pagination';
+import { PlaceholdersAndVanishInput } from '../components/ui/placeholders-and-vanish-input';
 import type { Product, SortBy, SortOrder } from '../types/product';
 
 const VIEW_STORAGE_KEY = 'shopit-products-view';
+
+const SEARCH_PLACEHOLDERS = [
+  'Search for wireless headphones...',
+  'A cozy knit sweater for winter',
+  'Minimalist leather wallet',
+  'Something to brew great coffee',
+  'A gift under $50',
+];
 
 const SORT_OPTIONS: Array<{ value: string; sortBy: SortBy; sortOrder: SortOrder; label: string }> = [
   { value: 'name-asc', sortBy: 'name', sortOrder: 'asc', label: 'Name A-Z' },
@@ -28,14 +38,37 @@ const labelText = {
   textTransform: 'uppercase' as const,
   letterSpacing: '0.1em',
 };
+// Matches the search bar: white pill, sand border, the same soft shadow.
 const inputStyle = {
   ...inkText,
   border: '1px solid #E4DCC9',
   backgroundColor: '#FFFFFF',
+  boxShadow: '0px 2px 8px -2px rgba(31,42,36,0.08)',
 };
 
+const RATING_OPTIONS = [
+  { value: '', label: 'Any rating' },
+  { value: '4', label: '4★ & up' },
+  { value: '3', label: '3★ & up' },
+  { value: '2', label: '2★ & up' },
+  { value: '1', label: '1★ & up' },
+];
+
+// Fade-and-rise used by the search bar's placeholder, reused for each control under
+// the search bar so they animate in/out the same way. Staggered by index so the row
+// arrives one control at a time rather than all at once.
+function filterMotion(index: number, prefersReduced: boolean | null) {
+  return {
+    initial: prefersReduced ? false : { y: 8, opacity: 0 },
+    animate: { y: 0, opacity: 1 },
+    exit: prefersReduced ? undefined : { y: -12, opacity: 0 },
+    transition: { duration: 0.3, ease: 'linear' as const, delay: index * 0.06 },
+  };
+}
+
 function ProductListingPage() {
-  const { filters, setCategoryId, setMinPrice, setMaxPrice, setSort, setPage, resetFilters } =
+  const navigate = useNavigate();
+  const { filters, setCategoryId, setMinPrice, setMaxPrice, setMinRating, setSort, setPage, resetFilters } =
     useProductFilters();
 
   const [searchValue, setSearchValue] = useState('');
@@ -111,104 +144,114 @@ function ProductListingPage() {
           Products
         </h1>
 
-        {/* Filter bar */}
-        <div className="flex flex-wrap gap-4 mb-8 items-end">
-          {/* Unified search box */}
-          <div className="flex flex-col gap-1">
-            <label style={labelText}>Search</label>
-            <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
-              <input
-                type="text"
-                value={searchValue}
-                onChange={(e) => setSearchValue(e.target.value)}
-                placeholder="Search products..."
-                className="px-3 py-2 rounded-md text-sm min-w-[280px]"
-                style={{ ...inputStyle, paddingRight: '32px' }}
-              />
-              {isSearching && (
-                <div style={{ position: 'absolute', right: '10px', display: 'flex', alignItems: 'center' }}>
-                  <Sparkles size={14} color="#7B5EA7" />
-                </div>
-              )}
-            </div>
-            {isSearching && (
+        {/* Search — on its own line */}
+        <div className="mb-3">
+          <PlaceholdersAndVanishInput
+            placeholders={SEARCH_PLACEHOLDERS}
+            onChange={(e) => setSearchValue(e.target.value)}
+            onSubmit={(e) => e.preventDefault()}
+            onImageSearch={() => navigate('/visual-search')}
+          />
+          {isSearching && (
+            <div className="flex items-center justify-center gap-1.5 mt-3">
+              <Sparkles size={14} color="#7B5EA7" />
               <span style={{ fontSize: '11px', color: '#7B5EA7', fontFamily: "'IBM Plex Mono', monospace" }}>
                 ✨ AI-powered results
               </span>
-            )}
-          </div>
-
-          {/* Category filter — hidden in semantic mode since results are ranked by relevance */}
-          {!isSearching && (
-            <div className="flex flex-col gap-1">
-              <label style={labelText}>Category</label>
-              <select
-                value={filters.categoryId}
-                onChange={(e) => setCategoryId(e.target.value)}
-                className="px-3 py-2 rounded-md text-sm min-w-[160px]"
-                style={inputStyle}
-              >
-                <option value="">All Categories</option>
-                {categories?.map((category) => (
-                  <option key={category.id} value={category.id}>
-                    {category.name}
-                  </option>
-                ))}
-              </select>
             </div>
           )}
+        </div>
 
-          {!isSearching && (
-            <div className="flex flex-col gap-1">
-              <label style={labelText}>Min Price</label>
-              <input
-                type="number"
-                min="0"
-                value={filters.minPrice}
-                onChange={(e) => setMinPrice(e.target.value)}
-                placeholder="0"
-                className="px-3 py-2 rounded-md text-sm w-24"
-                style={inputStyle}
-              />
-            </div>
-          )}
+        {/* Filters — under the search bar. Each control fades-and-rises in with a
+            stagger, matching the search bar's placeholder motion. */}
+        <div className="flex flex-wrap gap-4 mb-8 items-end">
+          {/* Category / price / sort — hidden in semantic mode since results are ranked
+              by relevance. */}
+          <AnimatePresence>
+            {!isSearching && [
+              <motion.div key="category" className="flex flex-col gap-1" {...filterMotion(0, prefersReduced)}>
+                <label style={labelText}>Category</label>
+                <select
+                  value={filters.categoryId}
+                  onChange={(e) => setCategoryId(e.target.value)}
+                  className="px-4 py-2.5 rounded-full text-sm min-w-[160px]"
+                  style={inputStyle}
+                >
+                  <option value="">All Categories</option>
+                  {categories?.map((category) => (
+                    <option key={category.id} value={category.id}>
+                      {category.name}
+                    </option>
+                  ))}
+                </select>
+              </motion.div>,
 
-          {!isSearching && (
-            <div className="flex flex-col gap-1">
-              <label style={labelText}>Max Price</label>
-              <input
-                type="number"
-                min="0"
-                value={filters.maxPrice}
-                onChange={(e) => setMaxPrice(e.target.value)}
-                placeholder="Any"
-                className="px-3 py-2 rounded-md text-sm w-24"
-                style={inputStyle}
-              />
-            </div>
-          )}
+              <motion.div key="min-price" className="flex flex-col gap-1" {...filterMotion(1, prefersReduced)}>
+                <label style={labelText}>Min Price</label>
+                <input
+                  type="number"
+                  min="0"
+                  value={filters.minPrice}
+                  onChange={(e) => setMinPrice(e.target.value)}
+                  placeholder="0"
+                  className="px-4 py-2.5 rounded-full text-sm w-28"
+                  style={inputStyle}
+                />
+              </motion.div>,
 
-          {!isSearching && (
-            <div className="flex flex-col gap-1">
-              <label style={labelText}>Sort By</label>
-              <select
-                value={currentSortValue}
-                onChange={(e) => handleSortChange(e.target.value)}
-                className="px-3 py-2 rounded-md text-sm min-w-[160px]"
-                style={inputStyle}
-              >
-                {SORT_OPTIONS.map((option) => (
-                  <option key={option.value} value={option.value}>
-                    {option.label}
-                  </option>
-                ))}
-              </select>
-            </div>
-          )}
+              <motion.div key="max-price" className="flex flex-col gap-1" {...filterMotion(2, prefersReduced)}>
+                <label style={labelText}>Max Price</label>
+                <input
+                  type="number"
+                  min="0"
+                  value={filters.maxPrice}
+                  onChange={(e) => setMaxPrice(e.target.value)}
+                  placeholder="Any"
+                  className="px-4 py-2.5 rounded-full text-sm w-28"
+                  style={inputStyle}
+                />
+              </motion.div>,
 
-          <div className="flex flex-col gap-1 ml-auto">
+              <motion.div key="rating" className="flex flex-col gap-1" {...filterMotion(3, prefersReduced)}>
+                <label style={labelText}>Rating</label>
+                <select
+                  value={filters.minRating}
+                  onChange={(e) => setMinRating(e.target.value)}
+                  className="px-4 py-2.5 rounded-full text-sm min-w-[140px]"
+                  style={inputStyle}
+                >
+                  {RATING_OPTIONS.map((option) => (
+                    <option key={option.value} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
+                </select>
+              </motion.div>,
+
+              <motion.div key="sort" className="flex flex-col gap-1" {...filterMotion(4, prefersReduced)}>
+                <label style={labelText}>Sort By</label>
+                <select
+                  value={currentSortValue}
+                  onChange={(e) => handleSortChange(e.target.value)}
+                  className="px-4 py-2.5 rounded-full text-sm min-w-[160px]"
+                  style={inputStyle}
+                >
+                  {SORT_OPTIONS.map((option) => (
+                    <option key={option.value} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
+                </select>
+              </motion.div>,
+            ]}
+          </AnimatePresence>
+
+          <motion.div className="flex flex-col gap-1 ml-auto" {...filterMotion(5, prefersReduced)}>
             <label style={labelText}>View</label>
-            <div className="flex rounded-md overflow-hidden" style={{ border: '1px solid #E4DCC9' }}>
+            <div
+              className="flex rounded-full overflow-hidden"
+              style={{ border: '1px solid #E4DCC9', boxShadow: '0px 2px 8px -2px rgba(31,42,36,0.08)' }}
+            >
               {(['grid', 'list'] as const).map((v) => (
                 <button
                   key={v}
@@ -227,7 +270,7 @@ function ProductListingPage() {
                 </button>
               ))}
             </div>
-          </div>
+          </motion.div>
         </div>
 
         {/* Grid / states */}
