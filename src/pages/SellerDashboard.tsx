@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { getMyStores } from '../api/SellerApi';
+import { StoreApprovedModal } from '../components/StoreApprovedModal';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { Loader2 } from 'lucide-react';
 import {
@@ -114,6 +115,15 @@ function SellerDashboard() {
   const activeStore = stores?.find(s => s.status === 'Approved') ?? stores?.[0];
   const isPending = !activeStore || activeStore.status !== 'Approved';
   const storeName = activeStore?.name ?? 'Your Store';
+
+  // Add state to track if modal was shown (uses localStorage so it only pops once per store)
+const [showApproved, setShowApproved] = useState(() => {
+  if (!activeStore || activeStore.status !== 'Approved') return false;
+  const key = `store-approved-seen-${activeStore.id}`;
+  if (localStorage.getItem(key)) return false;
+  localStorage.setItem(key, '1');
+  return true;
+});
 
   const statusBadge = isPending
     ? { label: 'Pending Approval', bg: '#FDF6DD', color: '#8A6D1B', border: '#E8D27A' }
@@ -253,7 +263,13 @@ function SellerDashboard() {
           ))
         )}
       </div>
-
+        {showApproved && activeStore && (
+        <StoreApprovedModal
+        storeName={activeStore.name}
+        storeSlug={activeStore.slug}
+        onDismiss={() => setShowApproved(false)}
+  />
+)}
       {/* Product engagement — clicks & time spent for this store's products */}
       <ProductEngagementPanel storeId={activeStore?.id} />
     </div>
