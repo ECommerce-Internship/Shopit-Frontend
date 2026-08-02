@@ -220,13 +220,13 @@ function AdminReviewsPage() {
           <div style={{ display: 'flex', gap: '8px' }}>
             <button
               onClick={() => { setView('all'); setPage(1); }}
-              style={{ border: '1px solid #E4DCC9', background: view === 'all' ? '#1F2A24' : '#fff', color: view === 'all' ? '#fff' : '#1F2A24', borderRadius: '10px', padding: '10px 16px', fontFamily: "'Inter', sans-serif", fontSize: '13px', fontWeight: 600, cursor: 'pointer' }}
+              style={{ border: '1px solid #E4DCC9', background: view === 'all' ? '#2F6F4F' : '#fff', color: view === 'all' ? '#fff' : '#1F2A24', borderRadius: '10px', padding: '10px 16px', fontFamily: "'Inter', sans-serif", fontSize: '13px', fontWeight: 600, cursor: 'pointer' }}
             >
               All Reviews
             </button>
             <button
               onClick={() => { setView('queue'); setPage(1); }}
-              style={{ border: '1px solid #E4DCC9', background: view === 'queue' ? '#1F2A24' : '#fff', color: view === 'queue' ? '#fff' : '#1F2A24', borderRadius: '10px', padding: '10px 16px', fontFamily: "'Inter', sans-serif", fontSize: '13px', fontWeight: 600, cursor: 'pointer' }}
+              style={{ border: '1px solid #E4DCC9', background: view === 'queue' ? '#2F6F4F' : '#fff', color: view === 'queue' ? '#fff' : '#1F2A24', borderRadius: '10px', padding: '10px 16px', fontFamily: "'Inter', sans-serif", fontSize: '13px', fontWeight: 600, cursor: 'pointer' }}
             >
               Moderation Queue
             </button>

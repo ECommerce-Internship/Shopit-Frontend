@@ -46,6 +46,7 @@ export type ProductFilters = {
   categoryId: string;
   minPrice: string;
   maxPrice: string;
+  minRating: string;
   sortBy: SortBy;
   sortOrder: SortOrder;
   page: number;

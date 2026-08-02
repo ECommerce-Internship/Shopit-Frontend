@@ -1,4 +1,5 @@
 import { createContext, useContext, useState, type ReactNode } from 'react';
+import { guestCartCount } from '../lib/guestCart';
 
 type CartContextType = {
   itemCount: number;
@@ -8,7 +9,8 @@ type CartContextType = {
 const CartContext = createContext<CartContextType | undefined>(undefined);
 
 export function CartProvider({ children }: { children: ReactNode }) {
-  const [itemCount, setItemCount] = useState(0);
+  // Seed from any guest cart so the badge is correct on first paint / reload.
+  const [itemCount, setItemCount] = useState(() => guestCartCount());
 
   return (
     <CartContext.Provider value={{ itemCount, setItemCount }}>

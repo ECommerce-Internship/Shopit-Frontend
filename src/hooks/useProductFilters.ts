@@ -11,6 +11,7 @@ function readFilters(searchParams: URLSearchParams): ProductFilters {
     categoryId: searchParams.get('categoryId') ?? '',
     minPrice: searchParams.get('minPrice') ?? '',
     maxPrice: searchParams.get('maxPrice') ?? '',
+    minRating: searchParams.get('minRating') ?? '',
     sortBy: (searchParams.get('sortBy') as SortBy) || DEFAULT_SORT_BY,
     sortOrder: (searchParams.get('sortOrder') as SortOrder) || DEFAULT_SORT_ORDER,
     page: Number(searchParams.get('page')) || 1,
@@ -42,6 +43,7 @@ export function useProductFilters() {
     if (merged.categoryId) params.set('categoryId', merged.categoryId);
     if (merged.minPrice) params.set('minPrice', merged.minPrice);
     if (merged.maxPrice) params.set('maxPrice', merged.maxPrice);
+    if (merged.minRating) params.set('minRating', merged.minRating);
     if (merged.storeId) params.set('storeId', merged.storeId);
     if (merged.sortBy !== DEFAULT_SORT_BY) params.set('sortBy', merged.sortBy);
     if (merged.sortOrder !== DEFAULT_SORT_ORDER) params.set('sortOrder', merged.sortOrder);
@@ -61,6 +63,7 @@ export function useProductFilters() {
     setCategoryId: (value: string) => updateParams({ categoryId: value }),
     setMinPrice: (value: string) => updateParams({ minPrice: value }),
     setMaxPrice: (value: string) => updateParams({ maxPrice: value }),
+    setMinRating: (value: string) => updateParams({ minRating: value }),
     setStoreId: (value: string) => updateParams({ storeId: value }),
     setSort: (sortBy: SortBy, sortOrder: SortOrder) => updateParams({ sortBy, sortOrder }),
     setPage: (page: number) => updateParams({ page }, false),

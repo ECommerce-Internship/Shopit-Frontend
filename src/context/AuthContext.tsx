@@ -36,6 +36,28 @@ type AuthContextType = {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+// The resolved user is persisted alongside the tokens so a refresh can restore
+// the exact account (name, role, storeIds) without a round-trip.
+const USER_KEY = 'shopit.user';
+
+function readStoredUser(): AuthUser | null {
+  try {
+    const raw = localStorage.getItem(USER_KEY);
+    return raw ? (JSON.parse(raw) as AuthUser) : null;
+  } catch {
+    return null;
+  }
+}
+
+function writeStoredUser(user: AuthUser | null) {
+  try {
+    if (user === null) localStorage.removeItem(USER_KEY);
+    else localStorage.setItem(USER_KEY, JSON.stringify(user));
+  } catch {
+    // Storage unavailable — session simply won't survive a refresh.
+  }
+}
+
 function buildAuthUser(data: LoginResponse): AuthUser {
   let role = data.user.role ?? 'Customer';
   let storeIds: string[] = [];
@@ -59,9 +81,11 @@ function buildAuthUser(data: LoginResponse): AuthUser {
 }
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [accessToken, setAccessToken] = useState<string | null>(null);
-  const [refreshToken, setRefreshToken] = useState<string | null>(null);
-  const [user, setUser] = useState<AuthUser | null>(null);
+  // Rehydrate synchronously from storage so the first render already reflects the
+  // session — route guards see the token immediately, avoiding a redirect to /login.
+  const [accessToken, setAccessToken] = useState<string | null>(() => authStore.getAccessToken());
+  const [refreshToken, setRefreshToken] = useState<string | null>(() => authStore.getRefreshToken());
+  const [user, setUser] = useState<AuthUser | null>(() => readStoredUser());
 
   const login = (data: LoginResponse) => {
     const authUser = buildAuthUser(data);
@@ -69,6 +93,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setRefreshToken(data.refreshToken);
     setUser(authUser);
     authStore.setTokens(data.accessToken, data.refreshToken);
+    writeStoredUser(authUser);
     return authUser;
   };
 
@@ -82,6 +107,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setRefreshToken(null);
       setUser(null);
       authStore.clearTokens();
+      writeStoredUser(null);
     }
   };
 
@@ -91,6 +117,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setRefreshToken(null);
       setUser(null);
       authStore.clearTokens();
+      writeStoredUser(null);
       window.location.href = '/login';
     });
   }, []);

@@ -79,8 +79,8 @@ export function CouponsPanel({ stores, allowPlatformWide, storesLoading, noStore
             style={{
               display: 'inline-flex', alignItems: 'center', gap: '8px',
               fontFamily: "'Inter', sans-serif", fontSize: '13px', fontWeight: 600,
-              color: '#fff', background: storesLoading || !canCreate ? '#A8C4B4' : '#1F2A24',
-              border: '1px solid', borderColor: storesLoading || !canCreate ? '#A8C4B4' : '#1F2A24',
+              color: '#fff', background: storesLoading || !canCreate ? '#A8C4B4' : '#2F6F4F',
+              border: '1px solid', borderColor: storesLoading || !canCreate ? '#A8C4B4' : '#2F6F4F',
               borderRadius: '11px', padding: '11px 18px',
               cursor: storesLoading || !canCreate ? 'not-allowed' : 'pointer', whiteSpace: 'nowrap',
             }}
