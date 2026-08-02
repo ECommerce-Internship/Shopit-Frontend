@@ -1,9 +1,11 @@
 import { useState, type FormEvent } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { Eye, EyeOff } from 'lucide-react';
 import toast from 'react-hot-toast';
 import axiosInstance from '../api/axiosInstance';
 import { useAuth, getRedirectPathForRole } from '../context/AuthContext';
+import { useCart } from '../context/CartContext';
+import { mergeGuestCartIntoServer } from '../lib/guestCart';
 import { AuthLayout } from '../components/AuthLayout';
 import { authAccent } from '../components/AuthModeSwitch';
 
@@ -22,7 +24,11 @@ function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const { login } = useAuth();
+  const { setItemCount } = useCart();
   const navigate = useNavigate();
+  const location = useLocation();
+  // Set by ProtectedRoute / the add-to-cart gate when a guest is bounced here.
+  const from = (location.state as { from?: { pathname?: string; search?: string } } | null)?.from;
 
   // Login is role-agnostic (the role comes back in the token), so there's no
   // customer/seller choice here — the form just uses the default accent.
@@ -56,7 +62,13 @@ function LoginPage() {
     try {
       const response = await axiosInstance.post('/api/v1/auth/login', { email, password });
       const authUser = login(response.data);
-      navigate(getRedirectPathForRole(authUser.role));
+      // Fold any guest (localStorage) cart into the real cart before moving on, so
+      // checkout — the usual reason a shopper signs in — already has their items.
+      const mergedCount = await mergeGuestCartIntoServer();
+      if (mergedCount !== null) setItemCount(mergedCount);
+      // Return the user to wherever they were headed; otherwise use the role default.
+      const returnTo = from ? `${from.pathname ?? ''}${from.search ?? ''}` : null;
+      navigate(returnTo || getRedirectPathForRole(authUser.role), { replace: true });
     } catch (err: any) {
       const message = err?.response?.data?.message ?? err?.response?.data ?? 'Login failed. Please try again.';
       toast.error(typeof message === 'string' ? message : 'Login failed. Please try again.');

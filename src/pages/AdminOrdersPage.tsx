@@ -133,7 +133,7 @@ function AdminOrdersPage() {
               onClick={() => { setStatus(f.value); setPage(1); }}
               style={{
                 border: 'none',
-                background: status === f.value ? '#1F2A24' : 'transparent',
+                background: status === f.value ? '#2F6F4F' : 'transparent',
                 color: status === f.value ? '#fff' : '#8A8273',
                 borderRadius: '8px',
                 padding: '8px 14px',

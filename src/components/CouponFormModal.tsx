@@ -242,7 +242,7 @@ export function CouponFormModal({ onClose, stores, allowPlatformWide }: Props) {
 
         <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', borderTop: '1px solid #F1EAD9', paddingTop: '20px' }}>
           <button onClick={onClose} disabled={pending} style={{ fontFamily: "'Inter', sans-serif", fontSize: '13px', fontWeight: 500, color: '#1F2A24', background: '#fff', border: '1px solid #E4DCC9', borderRadius: '11px', padding: '11px 18px', cursor: 'pointer' }}>Cancel</button>
-          <button onClick={handleCreate} disabled={pending} style={{ display: 'flex', alignItems: 'center', gap: '8px', fontFamily: "'Inter', sans-serif", fontSize: '13px', fontWeight: 600, color: '#fff', background: '#1F2A24', opacity: pending ? 0.7 : 1, border: '1px solid #1F2A24', borderRadius: '11px', padding: '11px 20px', cursor: pending ? 'wait' : 'pointer' }}>
+          <button onClick={handleCreate} disabled={pending} style={{ display: 'flex', alignItems: 'center', gap: '8px', fontFamily: "'Inter', sans-serif", fontSize: '13px', fontWeight: 600, color: '#fff', background: '#2F6F4F', opacity: pending ? 0.7 : 1, border: '1px solid #2F6F4F', borderRadius: '11px', padding: '11px 20px', cursor: pending ? 'wait' : 'pointer' }}>
             {pending && <Loader2 size={12} className="animate-spin" />}
             {pending ? 'Creating…' : 'Create Coupon'}
           </button>

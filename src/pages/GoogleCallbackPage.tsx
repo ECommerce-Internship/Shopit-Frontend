@@ -2,11 +2,14 @@ import { useEffect, useRef } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { useAuth } from '../context/AuthContext';
+import { useCart } from '../context/CartContext';
+import { mergeGuestCartIntoServer } from '../lib/guestCart';
 
 function GoogleCallbackPage() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const { login } = useAuth();
+  const { setItemCount } = useCart();
   const hasRun = useRef(false);
 
   useEffect(() => {
@@ -47,8 +50,13 @@ function GoogleCallbackPage() {
       },
     });
 
-    navigate('/', { replace: true });
-  }, [searchParams, login, navigate]);
+    // Merge any guest cart into the account, then land on the app.
+    mergeGuestCartIntoServer()
+      .then((mergedCount) => {
+        if (mergedCount !== null) setItemCount(mergedCount);
+      })
+      .finally(() => navigate('/', { replace: true }));
+  }, [searchParams, login, navigate, setItemCount]);
 
   return (
     <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: '#FBF7F0' }}>

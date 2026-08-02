@@ -31,6 +31,7 @@ export async function fetchProducts(filters: ProductFilters): Promise<PaginatedP
   if (filters.categoryId) params.categoryId = filters.categoryId;
   if (filters.minPrice) params.minPrice = filters.minPrice;
   if (filters.maxPrice) params.maxPrice = filters.maxPrice;
+  if (filters.minRating) params.minRating = filters.minRating;
   if (filters.storeId) params.storeId = filters.storeId;
   params.sortBy = filters.sortBy;
   params.sortOrder = filters.sortOrder;

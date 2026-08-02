@@ -1,11 +1,13 @@
 ﻿import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { useQuery, useMutation } from '@tanstack/react-query';
-import { ArrowLeft, Star, Loader2, Sparkles, CheckCircle2 } from 'lucide-react';
+import { ArrowLeft, Star, Loader2, Sparkles, CheckCircle2, Minus, Plus } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { fetchProductById } from '../api/productsApi';
+import { getProductGallery } from '../lib/productImage';
 import { fetchProductReviews } from '../api/reviewsApi';
 import { addCartItem } from '../api/cartApi';
+import { addToGuestCart, guestCartCount } from '../lib/guestCart';
 import { useCart } from '../context/CartContext';
 import WriteReviewForm from '../components/WriteReviewForm';
 import { useAuth } from '../context/AuthContext';
@@ -75,7 +77,8 @@ function StarRating({ rating }: { rating: number }) {
 function ProductDetailPage() {
   const { id } = useParams<{ id: string }>();
   const { setItemCount } = useCart();
-  const [quantity] = useState(1);
+  const [quantity, setQuantity] = useState(1);
+  const [activeImage, setActiveImage] = useState(0);
   const { user } = useAuth();
 
   const {
@@ -97,6 +100,11 @@ function ProductDetailPage() {
   // Record a view + measure dwell time once we know the product is real.
   useProductPageAnalytics(product?.id);
 
+  // Reset the gallery to the first image whenever we open a different product.
+  useEffect(() => {
+    setActiveImage(0);
+  }, [product?.id]);
+
   const addToCartMutation = useMutation({
     mutationFn: () => addCartItem(Number(id), quantity),
     onSuccess: (cart) => {
@@ -108,6 +116,30 @@ function ProductDetailPage() {
       toast.error('Could not add to cart. Please try again.');
     },
   });
+
+  // Adding to the cart is public. Guests get a local (localStorage) cart that is
+  // merged into their real cart on sign-in; only checkout requires an account.
+  function handleAddToCart() {
+    if (!user) {
+      if (!product) return;
+      addToGuestCart(
+        {
+          productId: product.id,
+          productName: product.name,
+          sku: product.sku,
+          unitPrice: product.price,
+          storeId: product.storeId,
+          storeName: product.storeName,
+          storeSlug: product.storeSlug,
+        },
+        quantity,
+      );
+      setItemCount(guestCartCount());
+      toast.success('Added to cart!');
+      return;
+    }
+    addToCartMutation.mutate();
+  }
 
   useEffect(() => {
     if (!product) return;
@@ -150,6 +182,7 @@ function ProductDetailPage() {
   }
 
   const stockBadge = getStockBadge(product.stockQuantity);
+  const gallery = getProductGallery(product);
   const reviews = reviewsData?.reviews ?? [];
   const hasAiContent = Boolean(
     product.description ||
@@ -181,15 +214,43 @@ function ProductDetailPage() {
         </p>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
-          {/* Image */}
-          <div
-            className="aspect-square rounded-lg flex items-center justify-center"
-            style={{ backgroundColor: '#F0ECE2' }}
-          >
-            {product.imageUrl ? (
-              <img src={product.imageUrl} alt={product.name} className="w-full h-full object-cover rounded-lg" />
-            ) : (
-              <span style={labelMono}>No Image</span>
+          {/* Image gallery — main shot with clickable thumbnails below */}
+          <div className="flex flex-col gap-3">
+            <div
+              className="aspect-square rounded-lg overflow-hidden"
+              style={{ backgroundColor: '#F0ECE2' }}
+            >
+              <img
+                src={gallery[activeImage]}
+                alt={`${product.name} — image ${activeImage + 1} of ${gallery.length}`}
+                className="w-full h-full object-cover"
+              />
+            </div>
+
+            {gallery.length > 1 && (
+              <div className="grid grid-cols-4 gap-3">
+                {gallery.map((src, index) => {
+                  const isActive = index === activeImage;
+                  return (
+                    <button
+                      key={src}
+                      type="button"
+                      onClick={() => setActiveImage(index)}
+                      aria-label={`View image ${index + 1}`}
+                      aria-current={isActive}
+                      className="aspect-square rounded-lg overflow-hidden transition"
+                      style={{
+                        backgroundColor: '#F0ECE2',
+                        outline: `2px solid ${isActive ? '#2F6F4F' : 'transparent'}`,
+                        outlineOffset: '2px',
+                        opacity: isActive ? 1 : 0.7,
+                      }}
+                    >
+                      <img src={src} alt="" className="w-full h-full object-cover" />
+                    </button>
+                  );
+                })}
+              </div>
             )}
           </div>
 
@@ -234,14 +295,48 @@ function ProductDetailPage() {
               {stockBadge.label}
             </span>
 
+            {product.stockQuantity > 0 && (
+              <div className="flex items-center gap-3">
+                <span style={labelMono}>Quantity</span>
+                <div
+                  className="flex items-center rounded-full overflow-hidden"
+                  style={{ border: '1px solid #E4DCC9', backgroundColor: '#FFFFFF' }}
+                >
+                  <button
+                    type="button"
+                    onClick={() => setQuantity((q) => Math.max(1, q - 1))}
+                    disabled={quantity <= 1}
+                    aria-label="Decrease quantity"
+                    className="px-3 py-2 disabled:opacity-40 disabled:cursor-not-allowed"
+                    style={{ color: '#2F6F4F' }}
+                  >
+                    <Minus size={16} />
+                  </button>
+                  <span className="w-10 text-center text-sm" style={inkText}>{quantity}</span>
+                  <button
+                    type="button"
+                    onClick={() => setQuantity((q) => Math.min(product.stockQuantity, q + 1))}
+                    disabled={quantity >= product.stockQuantity}
+                    aria-label="Increase quantity"
+                    className="px-3 py-2 disabled:opacity-40 disabled:cursor-not-allowed"
+                    style={{ color: '#2F6F4F' }}
+                  >
+                    <Plus size={16} />
+                  </button>
+                </div>
+              </div>
+            )}
+
             <button
-              onClick={() => addToCartMutation.mutate()}
+              onClick={handleAddToCart}
               disabled={product.stockQuantity === 0 || addToCartMutation.isPending}
               className="px-6 py-3 rounded-md text-sm flex items-center justify-center gap-2 w-fit disabled:opacity-50 disabled:cursor-not-allowed"
               style={{ backgroundColor: '#2F6F4F', color: '#FFFFFF', fontFamily: "'Inter', sans-serif" }}
             >
               {addToCartMutation.isPending && <Loader2 size={16} className="animate-spin" />}
-              {product.stockQuantity === 0 ? 'Out of Stock' : 'Add to Cart'}
+              {product.stockQuantity === 0
+                ? 'Out of Stock'
+                : `Add to Cart${quantity > 1 ? ` (${quantity})` : ''}`}
             </button>
 
             <div className="mt-4">

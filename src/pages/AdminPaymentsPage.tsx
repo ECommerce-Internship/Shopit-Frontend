@@ -114,7 +114,7 @@ function AdminPaymentsPage() {
                 onClick={() => { setStatusFilter(btn.value) }}
                 style={{
                   border: 'none',
-                  background: statusFilter === btn.value ? '#1F2A24' : 'transparent',
+                  background: statusFilter === btn.value ? '#2F6F4F' : 'transparent',
                   color: statusFilter === btn.value ? '#fff' : '#8A8273',
                   borderRadius: '8px',
                   padding: '8px 14px',

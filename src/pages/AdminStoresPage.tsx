@@ -260,7 +260,7 @@ function AdminStoresPage() {
               onClick={() => setStatusFilter(f.value)}
               style={{
                 border: 'none',
-                background: statusFilter === f.value ? '#1F2A24' : 'transparent',
+                background: statusFilter === f.value ? '#2F6F4F' : 'transparent',
                 color: statusFilter === f.value ? '#fff' : '#8A8273',
                 borderRadius: '8px',
                 padding: '8px 14px',
