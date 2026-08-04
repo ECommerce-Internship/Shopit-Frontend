@@ -24,7 +24,7 @@ export type StoreInfo = {
 
 export async function fetchProducts(filters: ProductFilters): Promise<PaginatedProducts> {
   const params: Record<string, string | number> = {
-    page: filters.page,
+    PageNumber: filters.page,
   };
 
   if (filters.search.trim()) params.search = filters.search.trim();
