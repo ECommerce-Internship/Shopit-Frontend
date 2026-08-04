@@ -4,6 +4,7 @@ import { useQuery, useMutation } from '@tanstack/react-query';
 import { Loader2, ImageOff, X } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { fetchCategories, fetchProductById, createProduct, updateProduct, uploadProductImage, deleteProductImage } from '../api/productsApi';
+import { fetchInventoryForProduct, updateThreshold } from '../api/inventoryApi';
 import { useSellerStores } from '../hooks/useSellerStores';
 import type { Product, Category } from '../types/product';
 import type { StoreResponse } from '../api/SellerApi';
@@ -40,13 +41,14 @@ type ProductFormFieldsProps = {
   stores: StoreResponse[];
   categories: Category[] | undefined;
   defaultStoreId: number | null;
+  initialThreshold: number;
   navigate: ReturnType<typeof useNavigate>;
 };
 
 // Keyed by the outer component on the product id (or 'new'), so this mounts
 // fresh — with the right initial values already in state — instead of
 // syncing fetched data into state via an effect after the fact.
-function ProductFormFields({ isEdit, productId, existingProduct, stores, categories, defaultStoreId, navigate }: ProductFormFieldsProps) {
+function ProductFormFields({ isEdit, productId, existingProduct, stores, categories, defaultStoreId, initialThreshold, navigate }: ProductFormFieldsProps) {
   const [form, setForm] = useState({
     name: existingProduct?.name ?? '',
     description: existingProduct?.description ?? '',
@@ -54,8 +56,9 @@ function ProductFormFields({ isEdit, productId, existingProduct, stores, categor
     sku: existingProduct?.sku ?? '',
     categoryId: (existingProduct?.categoryId ?? '') as number | '',
     stock: existingProduct ? String(existingProduct.stockQuantity) : '0',
+    lowStock: String(initialThreshold),
   });
-  const { name, description, price, sku, categoryId, stock } = form;
+  const { name, description, price, sku, categoryId, stock, lowStock } = form;
 
   const [storeId, setStoreId] = useState<number | null>(existingProduct?.storeId ?? defaultStoreId);
   const [imageUrl, setImageUrl] = useState<string | null>(existingProduct?.imageUrl ?? null);
@@ -100,6 +103,7 @@ const handleUseContent = (content: { description: string }) => {
 
     const parsedPrice = Number(price);
     const parsedStock = Number(stock);
+    const parsedLowStock = Number(lowStock);
 
     if (!Number.isFinite(parsedPrice) || parsedPrice <= 0) {
       toast.error('Price must be a number greater than 0.');
@@ -107,6 +111,10 @@ const handleUseContent = (content: { description: string }) => {
     }
     if (!Number.isFinite(parsedStock) || parsedStock < 0) {
       toast.error('Stock must be a whole number of 0 or more.');
+      return;
+    }
+    if (!Number.isInteger(parsedLowStock) || parsedLowStock < 0) {
+      toast.error('Low-stock alert must be a whole number of 0 or more.');
       return;
     }
 
@@ -121,6 +129,9 @@ const handleUseContent = (content: { description: string }) => {
           categoryId: Number(categoryId),
           stockQuantity: parsedStock,
         });
+        if (parsedLowStock !== initialThreshold) {
+          await updateThreshold(productId, parsedLowStock);
+        }
         if (pendingFile) {
           await uploadProductImage(productId, pendingFile);
         }
@@ -134,6 +145,7 @@ const handleUseContent = (content: { description: string }) => {
           categoryId: Number(categoryId),
           storeId,
           initialStock: parsedStock,
+          lowStockThreshold: parsedLowStock,
         }) as { id: number };
         if (pendingFile) {
           await uploadProductImage(created.id, pendingFile);
@@ -232,6 +244,14 @@ const handleUseContent = (content: { description: string }) => {
         </div>
 
         <div>
+          <label style={labelStyle}>Low-stock alert</label>
+          <input type="number" min={0} step={1} value={lowStock} onChange={(e) => setForm((f) => ({ ...f, lowStock: e.target.value }))} style={fieldStyle} />
+          <p style={{ ...mutedText, fontSize: '12px', margin: '6px 0 0' }}>
+            Flag this product as low on stock once its quantity drops to this number or below.
+          </p>
+        </div>
+
+        <div>
           <label style={labelStyle}>Product image</label>
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
             <div style={{ width: '56px', height: '56px', borderRadius: '8px', background: '#FBF7F0', border: '1px solid #E4DCC9', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', flexShrink: 0 }}>
@@ -308,6 +328,14 @@ function SellerProductFormPage() {
     enabled: isEdit && productId !== null,
   });
 
+  // The low-stock threshold lives on the inventory record, not the product, so
+  // load it separately when editing to seed the form. New products default to 10.
+  const { data: inventory, isLoading: inventoryLoading } = useQuery({
+    queryKey: ['inventory', productId],
+    queryFn: () => fetchInventoryForProduct(productId!),
+    enabled: isEdit && productId !== null,
+  });
+
   const ownedStoreIds = new Set(stores.map((s) => s.id));
 
   // Guard against a seller reaching another seller's product via a guessed URL:
@@ -315,7 +343,7 @@ function SellerProductFormPage() {
   // enforces this too on every mutation — this just avoids a confusing flow).
   const isForeignProduct = isEdit && existingProduct !== undefined && !ownedStoreIds.has(existingProduct.storeId);
 
-  if (storesLoading || (isEdit && productLoading)) {
+  if (storesLoading || (isEdit && (productLoading || inventoryLoading))) {
     return (
       <div style={{ minHeight: '100vh', background: '#FBF7F0', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
         <p style={mutedText}>Loading…</p>
@@ -349,6 +377,7 @@ function SellerProductFormPage() {
         stores={stores}
         categories={categories}
         defaultStoreId={defaultStoreId}
+        initialThreshold={inventory?.lowStockThreshold ?? 10}
         navigate={navigate}
       />
     </div>
