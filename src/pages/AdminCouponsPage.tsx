@@ -1,5 +1,4 @@
 import { useQuery } from '@tanstack/react-query';
-import { AdminTabs } from '../components/AdminTabs';
 import { CouponsPanel } from '../components/CouponsPanel';
 import { fetchStores } from '../api/storesApi';
 
@@ -25,7 +24,6 @@ function AdminCouponsPage() {
   return (
     <div className="admin-enter" style={{ minHeight: '100vh', background: '#FBF7F0', fontFamily: "'Inter', sans-serif", color: '#1F2A24', padding: '40px' }}>
       <div style={{ maxWidth: '1240px', margin: '0 auto', display: 'flex', gap: '40px', alignItems: 'flex-start' }}>
-        <AdminTabs active="Coupons" />
         <div style={{ flex: 1, minWidth: 0 }}>
           <div style={{ marginBottom: '26px' }}>
             <div style={{ ...labelMono, marginBottom: '9px' }}>Shopit Admin</div>

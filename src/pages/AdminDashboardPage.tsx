@@ -7,7 +7,6 @@ import {
   ResponsiveContainer, LineChart, Line, BarChart, Bar,
   XAxis, YAxis, CartesianGrid, Tooltip,
 } from 'recharts';
-import { AdminTabs } from '../components/AdminTabs';
 import {
   fetchDashboardSummary, fetchRevenue, fetchOrdersByStatus, fetchTopProducts,
 } from '../api/dashboardApi';
@@ -96,7 +95,6 @@ function AdminDashboardPage() {
   return (
     <div className="admin-enter" style={{ minHeight: '100vh', background: '#FBF7F0', fontFamily: "'Inter', sans-serif", color: '#1F2A24', padding: '40px' }}>
       <div style={{ maxWidth: '1240px', margin: '0 auto', display: 'flex', gap: '40px', alignItems: 'flex-start' }}>
-        <AdminTabs active="Dashboard" />
         <div style={{ flex: 1, minWidth: 0 }}>
 
         {/* Header */}

@@ -7,6 +7,7 @@ import { ProtectedRoute } from './components/ProtectedRoute';
 import { AdminRoute } from './components/AdminRoute';
 import { SellerRoute } from './components/SellerRoute';
 import { AppLayout } from './components/AppLayout';
+import { AdminLayout } from './components/AdminLayout';
 import { ChatButton } from './components/ChatButton';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { useAuth } from './context/AuthContext';
@@ -51,10 +52,11 @@ const SellerDashboard = lazy(() => import('./pages/SellerDashboard'));
 
 const HIDDEN_NAVBAR_PATHS = ['/', '/login', '/register', '/forgot-password', '/auth/google/callback'];
 
-// Route prefixes rendered inside AppLayout (customer + seller). These own their
-// own full-height sidebar, so the global top navbar is hidden on them. Admin and
-// public pages (storefront, /sell) keep the top navbar.
-const SIDEBAR_LAYOUT_PREFIXES = ['/products', '/visual-search', '/account', '/dashboard', '/cart', '/checkout', '/orders', '/seller'];
+// Route prefixes rendered inside a sidebar layout (customer + seller via
+// AppLayout, admin via AdminLayout). These own their own full-height sidebar, so
+// the global top navbar is hidden on them. Public pages (storefront, /sell) keep
+// the top navbar.
+const SIDEBAR_LAYOUT_PREFIXES = ['/products', '/visual-search', '/account', '/dashboard', '/cart', '/checkout', '/orders', '/seller', '/admin'];
 
 function App() {
   const location = useLocation();
@@ -79,19 +81,22 @@ function App() {
         <Route path="/auth/google/callback" element={<GoogleCallbackPage />} />
         <Route path="/sell" element={<SellerRegisterPage />} />
         <Route path="/stores/:slug" element={<StorefrontPage />} />
-        {/* Admin console — sign-in + admin role required. Keeps the top navbar. */}
+        {/* Admin console — sign-in + admin role required. Rendered inside
+            AdminLayout's full-height sidebar (no top navbar). */}
         <Route element={<ProtectedRoute />}>
           <Route element={<AdminRoute />}>
             <Route path="/admin" element={<Navigate to="/admin/dashboard" replace />} />
-            <Route path="/admin/dashboard" element={<AdminDashboardPage />} />
-            <Route path="/admin/orders" element={<AdminOrdersPage />} />
-            <Route path="/admin/inventory" element={<AdminInventoryPage />} />
-            <Route path="/admin/products" element={<AdminProductsPage />} />
-            <Route path="/admin/categories" element={<AdminCategoriesPage />} />
-            <Route path="/admin/stores" element={<AdminStoresPage />} />
-            <Route path="/admin/coupons" element={<AdminCouponsPage />} />
-            <Route path="/admin/payments" element={<AdminPaymentsPage />} />
-            <Route path="/admin/reviews" element={<AdminReviewsPage />} />
+            <Route element={<AdminLayout />}>
+              <Route path="/admin/dashboard" element={<AdminDashboardPage />} />
+              <Route path="/admin/orders" element={<AdminOrdersPage />} />
+              <Route path="/admin/inventory" element={<AdminInventoryPage />} />
+              <Route path="/admin/products" element={<AdminProductsPage />} />
+              <Route path="/admin/categories" element={<AdminCategoriesPage />} />
+              <Route path="/admin/stores" element={<AdminStoresPage />} />
+              <Route path="/admin/coupons" element={<AdminCouponsPage />} />
+              <Route path="/admin/payments" element={<AdminPaymentsPage />} />
+              <Route path="/admin/reviews" element={<AdminReviewsPage />} />
+            </Route>
           </Route>
         </Route>
 

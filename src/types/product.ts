@@ -84,6 +84,7 @@ export type CreateProductRequest = {
   categoryId: number;
   storeId: number;
   initialStock: number;
+  lowStockThreshold: number;
 };
 
 export type UpdateProductRequest = {

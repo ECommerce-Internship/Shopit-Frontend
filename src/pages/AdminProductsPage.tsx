@@ -1,6 +1,5 @@
 ﻿import { useEffect, useMemo, useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { AdminTabs } from '../components/AdminTabs';
 import { SkeletonTableRow } from '../components/Skeleton';
 import { Loader2 } from 'lucide-react';
 import { GenerateContentDrawer } from '../components/GenerateContentDrawer';
@@ -63,6 +62,7 @@ type FormState = {
   storeId: number | '';
   initialStock: string;
   stockQuantity: string;
+  lowStockThreshold: string;
   description: string;
   seoTitle: string;
   metaDescription: string;
@@ -78,6 +78,7 @@ const emptyForm: FormState = {
   storeId: '',
   initialStock: '',
   stockQuantity: '',
+  lowStockThreshold: '',
   description: '',
   seoTitle: '',
   metaDescription: '',
@@ -202,6 +203,7 @@ function AdminProductsPage() {
       storeId: p.storeId ?? '',
       initialStock: '',
       stockQuantity: String(p.stockQuantity),
+      lowStockThreshold: '',
       description: p.description ?? '',
       seoTitle: p.seoTitle ?? '',
       metaDescription: p.metaDescription ?? '',
@@ -325,6 +327,7 @@ const handleUseContent = (content: { description: string }) => {
           categoryId,
           storeId: Number(form.storeId),
           initialStock: parseInt(form.initialStock, 10) || 0,
+          lowStockThreshold: parseInt(form.lowStockThreshold, 10) || 10,
         });
         productId = created.id;
       } else {
@@ -459,7 +462,6 @@ const handleUseContent = (content: { description: string }) => {
   return (
     <div className="admin-enter" style={{ minHeight: '100vh', background: '#FBF7F0', fontFamily: "'Inter', sans-serif", color: '#1F2A24', padding: '40px' }}>
       <div style={{ maxWidth: '1240px', margin: '0 auto', display: 'flex', gap: '40px', alignItems: 'flex-start' }}>
-        <AdminTabs active="Products" />
         <div style={{ flex: 1, minWidth: 0 }}>
 
         {/* Header */}
@@ -611,10 +613,16 @@ const handleUseContent = (content: { description: string }) => {
             </div>
 
             {editMode === 'create' ? (
-              <div style={{ marginBottom: '16px' }}>
-                <div style={fieldLabel}>Initial Stock</div>
-                <input type="number" value={form.initialStock} onChange={(e) => updateField('initialStock', e.target.value)} placeholder="0" style={{ ...inputStyle, fontFamily: "'IBM Plex Mono', monospace" }} />
-              </div>
+              <>
+                <div style={{ marginBottom: '16px' }}>
+                  <div style={fieldLabel}>Initial Stock</div>
+                  <input type="number" value={form.initialStock} onChange={(e) => updateField('initialStock', e.target.value)} placeholder="0" style={{ ...inputStyle, fontFamily: "'IBM Plex Mono', monospace" }} />
+                </div>
+                <div style={{ marginBottom: '16px' }}>
+                  <div style={fieldLabel}>Low-Stock Threshold</div>
+                  <input type="number" value={form.lowStockThreshold} onChange={(e) => updateField('lowStockThreshold', e.target.value)} placeholder="10" style={{ ...inputStyle, fontFamily: "'IBM Plex Mono', monospace" }} />
+                </div>
+              </>
             ) : (
               <div style={{ marginBottom: '16px' }}>
                 <div style={fieldLabel}>Stock Quantity</div>

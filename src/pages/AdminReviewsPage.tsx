@@ -2,7 +2,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Loader2, Check, X } from 'lucide-react';
 import toast from 'react-hot-toast';
-import { AdminTabs } from '../components/AdminTabs';
 import { adminDeleteReview, approveReview, rejectReview, getAllReviews, fetchModerationQueue, type ReviewFilters } from '../api/reviewsApi';
 import { fetchStores } from '../api/storesApi';
 import type { Review } from '../types/review';
@@ -208,7 +207,6 @@ function AdminReviewsPage() {
       )}
 
       <div style={{ maxWidth: '1240px', margin: '0 auto', display: 'flex', gap: '40px', alignItems: 'flex-start' }}>
-        <AdminTabs active="Reviews" />
         <div style={{ flex: 1, minWidth: 0 }}>
 
         {/* Header */}

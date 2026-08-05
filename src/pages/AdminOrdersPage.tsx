@@ -2,7 +2,6 @@ import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Loader2, ChevronDown, ChevronRight } from 'lucide-react';
 import toast from 'react-hot-toast';
-import { AdminTabs } from '../components/AdminTabs';
 import { SkeletonTableRow } from '../components/Skeleton';
 import {
   fetchAdminOrders,
@@ -116,7 +115,6 @@ function AdminOrdersPage() {
   return (
     <div className="admin-enter" style={{ minHeight: '100vh', background: '#FBF7F0', fontFamily: "'Inter', sans-serif", color: '#1F2A24', padding: '40px' }}>
       <div style={{ maxWidth: '1240px', margin: '0 auto', display: 'flex', gap: '40px', alignItems: 'flex-start' }}>
-        <AdminTabs active="Orders" />
         <div style={{ flex: 1, minWidth: 0 }}>
 
         {/* Header */}

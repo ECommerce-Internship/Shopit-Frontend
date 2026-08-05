@@ -1,6 +1,5 @@
 import { useMemo, useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { AdminTabs } from '../components/AdminTabs';
 import { SkeletonTableRow } from '../components/Skeleton';
 import { Loader2 } from 'lucide-react';
 import toast from 'react-hot-toast';
@@ -196,7 +195,6 @@ function AdminCategoriesPage() {
   return (
     <div className="admin-enter" style={{ minHeight: '100vh', background: '#FBF7F0', fontFamily: "'Inter', sans-serif", color: '#1F2A24', padding: '40px' }}>
       <div style={{ maxWidth: '1240px', margin: '0 auto', display: 'flex', gap: '40px', alignItems: 'flex-start' }}>
-        <AdminTabs active="Categories" />
         <div style={{ flex: 1, minWidth: 0 }}>
 
         {/* Header */}
